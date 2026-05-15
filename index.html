@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vladimír Nešetřil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     ZÁKLADNÍ RESET
+     Každý prohlížeč má vlastní výchozí mezery – toto je smaže.
+     box-sizing: border-box znamená, že padding je součástí šířky.
+     ============================================================ */
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+
+  /* ============================================================
+     CSS PROMĚNNÉ – barvy a hodnoty použité opakovaně
+     Změna zde se projeví všude najednou.
+     ============================================================ */
+  :root {
+    --gold:        #d4a85a;   /* zlatá – základní */
+    --gold-bright: #f0d080;   /* zlatá – světlejší, pro hover efekty */
+    --text-mid:    #c8b890;   /* střední béžová pro popisky */
+    --text-dim:    #a09070;   /* tlumená béžová pro méně důležitý text */
+
+    /* Barvy pozadí – teplá mahagonová/terakota */
+    --bg-dark:     #1a0f08;   /* nejtemější – okraje stránky */
+    --bg-mid:      #2e1c10;   /* střední vrstva */
+    --bg-warm:     #4a2e1a;   /* nejteplejší – střed záře */
+  }
+
+
+  /* ============================================================
+     BODY – základ celé stránky
+     ============================================================ */
+  body {
+    background: var(--bg-dark);
+    min-height: 100vh;                       /* minimálně celá výška okna */
+    font-family: 'Cormorant Garamond', serif; /* elegantní serifové písmo */
+    overflow-x: hidden;                      /* bez vodorovného scrollbaru */
+  }
+
+
+  /* ============================================================
+     PŘEPÍNAČ JAZYKŮ (CS / EN / DE) – fixní v pravém horním rohu
+     ============================================================ */
+  .lang-switcher {
+    position: fixed;          /* zůstane na místě i při scrollování */
+    top: 1.4rem;
+    right: 1.8rem;
+    z-index: 200;             /* nad vším ostatním */
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  /* Jednotlivá tlačítka jazyka */
+  .lang-btn {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(212,168,90,0.4);
+    color: #c8a870;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;       /* +30% oproti původním .6rem */
+    letter-spacing: .15em;
+    padding: .35rem .7rem;
+    cursor: pointer;
+    transition: all .3s;
+  }
+
+  /* Aktivní nebo hovered tlačítko jazyka */
+  .lang-btn:hover,
+  .lang-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(0,0,0,.6);
+  }
+
+
+  /* ============================================================
+     SCÉNA – hlavní kontejner celé stránky
+     Flexbox vycentruje obsah svisle i vodorovně.
+     ============================================================ */
+  .scene {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;   /* obsah seřazen shora dolů */
+    align-items: center;      /* vycentrováno vodorovně */
+    justify-content: center;  /* vycentrováno svisle */
+    padding: 4rem 1rem 2rem;
+    overflow: hidden;
+  }
+
+  /* Teplé pozadí – mahagonová záře vyzařující ze středu */
+  .scene-bg {
+    position: absolute;
+    inset: 0;                 /* zkratka pro top/right/bottom/left: 0 */
+    background: radial-gradient(
+      ellipse 70% 80% at 50% 55%,
+      var(--bg-warm) 0%,
+      var(--bg-mid)  40%,
+      var(--bg-dark) 75%
+    );
+  }
+
+  /* Jemný tmavý přechod od středu dolů (hloubka) */
+  .scene-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.0) 0%,
+      rgba(0,0,0,0.4) 100%
+    );
+  }
+
+  /* Kontejner perspektivních linek sbíhajících se do středu */
+  .corridor-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;     /* klikání prochází skrz */
+  }
+  .corridor-lines svg {
+    width: 100%;
+    height: 100%;
+    opacity: 0.13;            /* velmi jemné, dekorativní */
+  }
+
+  /* Filmový grain (šum) – ultra průhledný, dodává texturu */
+  .grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px;
+  }
+
+
+  /* ============================================================
+     HEADER – nadpis / podtitul nad dveřmi
+     ============================================================ */
+  .site-header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    margin-bottom: clamp(1.5rem, 4vh, 3rem);
+    animation: fadeDown 1.2s ease both;  /* sjede shora při načtení */
+  }
+
+  .site-header p {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    /* clamp(minimum, preferované, maximum) – plynulá škála dle šířky okna */
+    font-size: clamp(1.1rem, 1.82vw, 1.43rem);  /* +30%: bylo .85/1.4/1.1 */
+    color: #c8b882;
+    letter-spacing: .1em;
+    text-shadow: 0 1px 6px rgba(0,0,0,.7);
+  }
+
+
+  /* ============================================================
+     ŘADA DVEŘÍ – flexbox který je drží vedle sebe
+     align-items: flex-end = zarovnání ke spodní hraně (podlaha)
+     ============================================================ */
+  .doors {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: clamp(1.5rem, 3vw, 3.5rem);
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeUp 1.4s ease 0.2s both;  /* vypluje zdola při načtení */
+  }
+
+
+  /* ============================================================
+     JEDEN OBAL DVEŘÍ – sloupec: nápis → dveře → popis
+     ============================================================ */
+  .door-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;    /* odstraní podtržení u odkazu */
+    transition: transform .4s ease;
+  }
+
+
+  /* ============================================================
+     NÁPIS NAD DVEŘMI (Práce / Život / Rovnováha)
+     ============================================================ */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
+    font-size: clamp(.78rem, 1.43vw, 1.24rem);  /* +30%: bylo .6/1.1/.95 */
+    letter-spacing: .3em;
+    color: var(--text-mid);
+    text-shadow: 0 1px 8px rgba(0,0,0,.85);
+    margin-bottom: clamp(.4rem, .9vh, .8rem);
+    opacity: .88;
+    transition: opacity .3s, letter-spacing .4s, color .3s;
+  }
+
+  /* Hover – nápis se rozsvítí a rozptýlí */
+  .door-wrap:hover .section-label {
+    opacity: 1;
+    letter-spacing: .38em;
+    color: var(--gold-bright);
+  }
+
+
+  /* ============================================================
+     RÁMEČEK DVEŘÍ – obal SVG ilustrace
+     drop-shadow = stín pod celou ilustrací (i průhledné části)
+     ============================================================ */
+  .door-frame {
+    position: relative;
+    transition: transform .4s ease;
+    filter: drop-shadow(0 30px 45px rgba(0,0,0,.75));
+  }
+
+  /* Hover – dveře se nadzdvihnou */
+  .door-wrap:hover .door-frame { transform: translateY(-10px); }
+
+
+  /* ============================================================
+     OBRÁZKOVÁ VERZE DVEŘÍ
+     door-img-wrap = relativní kontejner, aby šlo pozicovat cedulku
+     img = přizpůsobí šířku, výška automaticky podle proporcí
+     ============================================================ */
+  .door-img-wrap {
+    position: relative;   /* kotva pro absolutně pozicovanou cedulku */
+    display: block;
+  }
+
+  /* Obrázek dveří – stejné fluid šířky jako SVG verze */
+  .door-pro    .door-img-wrap img,
+  .door-hosp   .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: auto; display: block; }
+  .door-fantasy .door-img-wrap img { width: clamp(151px, 19.2vw, 324px); height: clamp(220px, 28vw, 480px); display: block; object-fit: cover; object-position: center; }
+
+  /* Tabulka nahoře – hodiny na profesionálních dveřích */
+  .clock-plate {
+    bottom: 100%;
+    top: 2%;
+    font-family: monospace;
+    letter-spacing: 3px;
+    color: #2a1a04;
+    font-size: clamp(10px, 1.2vw, 14px);
+    padding: 3px -10px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  /* Tabulka nahoře – datum na nemocničních dveřích */
+  .date-plate {
+    bottom: 98%;
+    top: 6%;
+    font-family: monospace;
+    letter-spacing: 2px;
+    color: #4a5a52;
+    font-size: clamp(8px, 1vw, 12px);
+    padding: 4px 10px;
+ background: transparent;
+  border: none;
+  box-shadow: none;
+
+  }
+
+  /* ── Cedulka přes obrázek ── */
+  .door-overlay-plate {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 14px;
+    border-radius: 3px;
+    pointer-events: none;   /* klikání prochází na odkaz pod tím */
+  }
+
+  /* Mosazná tabulka – profesionální dveře */
+  .brass-plate {
+    bottom: 66%;            /* přibližně dolní třetina dveří */
+    background: linear-gradient(to bottom, #d4aa50, #b8902a, #d4aa50);
+    border: 1px solid #8a6a30;
+    box-shadow: 0 2px 6px rgba(0,0,0,.5);
+  }
+  .brass-plate span {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(7px, 1vw, 11px);
+    letter-spacing: .12em;
+    color: #2a1a04;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Nemocniční jmenovka – bílá institucionalní */
+  .hosp-plate {
+    bottom: 58%;
+    background: #eef2ee;
+    border: 1px solid #b0bab5;
+    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    min-width: 35%;
+  }
+  .hosp-plate span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(10px, 1.1vw, 12px);
+    color: #3a4a42;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  .hosp-plate-sub {
+    font-style: italic;
+    font-size: clamp(6px, 0.85vw, 10px) !important;
+    color: #7a8a82 !important;
+    border-top: 1px solid #c0cac0;
+    padding-top: 2px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ── Glow efekt sedí na img stejně jako na SVG ── */
+  .door-pro   .door-img-wrap ~ .door-light,
+  .door-hosp  .door-img-wrap ~ .door-light { background: #d4a85a; }
+
+  /* ============================================================
+     +20% oproti původním hodnotám:
+       pro/hosp: bylo 110/14vw/240 → nyní 132/16.8vw/288
+       fantasy:  bylo 126/16vw/270 → nyní 151/19.2vw/324
+     ============================================================ */
+.door-pro    .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: auto; display: block; }
+.door-hosp   .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: clamp(220px, 26vw, 480px); display: block; object-fit: cover; object-position: center; }
+.door-fantasy .door-frame svg { width: clamp(132px, 16.8vw, 288px); height: auto; }
+
+
+  /* ============================================================
+     ZÁŘE POD DVEŘMI – rozsvítí se při hoveru
+     Každý typ dveří má jinou barvu záře.
+     ============================================================ */
+  .door-light {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130%;
+    height: 15px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity .5s;
+    filter: blur(14px);
+  }
+  .door-pro     .door-light { background: #d4a85a; }  /* zlatá */
+  .door-fantasy .door-light { background: #7fc47f; }  /* zelená */
+  .door-hosp    .door-light { background: #c8e0f0; }  /* modrá */
+  .door-wrap:hover .door-light { opacity: 1; }
+
+
+  /* ============================================================
+     SVĚTLO VE ŠKVÍŘE – tenká záře na pravém okraji dveří
+     Simuluje světlo pronikající zpoza dveří.
+     ============================================================ */
+  .door-edge-glow {
+    position: absolute;
+    top: 8%;
+    right: -2px;
+    width: 10px;
+    height: 84%;
+    border-radius: 2px;
+    opacity: 0;
+    filter: blur(2px);
+    transition: opacity .3s;
+  }
+  .door-pro     .door-edge-glow { background: linear-gradient(to bottom, transparent, #d4a85a, transparent); }
+  .door-fantasy .door-edge-glow { background: linear-gradient(to bottom, transparent, #5fca5f, transparent); }
+  .door-hosp    .door-edge-glow { background: linear-gradient(to bottom, transparent, #a8ccee, transparent); }
+  .door-wrap:hover .door-edge-glow { opacity: 1; }
+
+
+
+
+  /* ============================================================
+     POPIS POD JMÉNEM (profesionální / fantaskní světy / zdraví & tělo)
+     ============================================================ */
+  .door-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(.85rem, 1.27vw, 1.17rem);  /* +30%: bylo .65/.98/.9 */
+    color: var(--text-dim);
+    text-shadow: 0 1px 5px rgba(0,0,0,.9);
+    margin-top: .25rem;
+    opacity: .82;
+    letter-spacing: .08em;
+  }
+
+
+  /* ============================================================
+     PATIČKA – jemný text úplně dole
+     ============================================================ */
+  .site-footer {
+    position: relative;
+    z-index: 10;
+    margin-top: clamp(1.2rem, 3vh, 2.5rem);
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1.99rem, 1.3vw, 1.24rem);  /* +30%: bylo .65/.9/.8 */
+    color: rgba(190,168,128,.65);
+    text-shadow: 0 1px 5px rgba(0,0,0,.85);
+    letter-spacing: .08em;
+    animation: fadeUp 1.6s ease .4s both;
+  }
+
+
+  /* ============================================================
+     ANIMACE při načtení stránky
+     fadeDown = sjede shora | fadeUp = vypluje zdola
+     ============================================================ */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+
+  /* ============================================================
+     MOBILNÍ ZOBRAZENÍ – pro obrazovky užší než 620px
+     Dveře se přesunou pod sebe místo vedle sebe.
+     ============================================================ */
+  @media (max-width: 620px) {
+    .doors {
+      flex-direction: column;  /* pod sebe */
+      align-items: center;
+      gap: 1.4rem;
+    }
+    .door-wrap {
+      flex-direction: row;     /* na mobilu: nápis vlevo, dveře vpravo */
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    /* Dveře zmenšíme na mobilní velikost */
+    .door-pro   .door-frame svg,
+    .door-hosp  .door-frame svg  { width: 88px; }
+    .door-fantasy .door-frame svg { width: 102px; }
+    /* Nápis nad dveřmi otočíme na svislý (vejde se vedle dveří) */
+    .section-label {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: .2em;
+      margin-bottom: 0;
+      margin-right: .6rem;
+    }
+    .door-label { display: none; }  /* popis schováme, šetříme místo */
+    .scene { padding: 5rem 1rem 2.5rem; justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-switcher">
+  <button class="lang-btn active" onclick="setLang('cs')">CS</button>
+  <button class="lang-btn"        onclick="setLang('en')">EN</button>
+  <button class="lang-btn"        onclick="setLang('de')">DE</button>
+</div>
+
+<div class="scene">
+  <div class="scene-bg"></div>
+
+  <!-- Perspektivní linky -->
+  <div class="corridor-lines">
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <!-- Floor lines → VP center -->
+      <line x1="600" y1="400" x2="0"    y2="800" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="300"  y2="800" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="600"  y2="800" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="900"  y2="800" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="1200" y2="800" stroke="#c8a060" stroke-width="1"/>
+      <!-- Ceiling lines -->
+      <line x1="600" y1="400" x2="0"    y2="0"   stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="300"  y2="0"   stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="600"  y2="0"   stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="900"  y2="0"   stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="1200" y2="0"   stroke="#c8a060" stroke-width="1"/>
+      <!-- Side walls -->
+      <line x1="600" y1="400" x2="0"    y2="300" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="0"    y2="500" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="1200" y2="300" stroke="#c8a060" stroke-width="1"/>
+      <line x1="600" y1="400" x2="1200" y2="500" stroke="#c8a060" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="grain"></div>
+
+  <!-- ── HEADER ── -->
+  <header class="site-header">
+    <p data-key="subtitle">tři dveře. tři světy.</p>
+  </header>
+
+  <!-- ── TŘI DVEŘE ── -->
+  <div class="doors">
+
+    <!--------------------------------- PROFESIONÁLNÍ --------------------------------->
+    <a class="door-wrap door-pro" href="https://nes-e-tril.ct.ws/professional.html">
+      <div class="section-label" data-key="sec1">Práce</div>
+      <div class="door-frame">
+        <div class="door-light"></div>
+        <div class="door-edge-glow"></div>
+
+        <!-- Obrázek dveří – šířka se přizpůsobuje, výška automaticky -->
+        <div class="door-img-wrap">
+          <img src="https://i.imgur.com/5uoiTb5.jpg" alt="Profesionální dveře">
+
+          <!-- Hodiny nahoře – čas ve formátu HHMM -->
+          <div class="door-overlay-plate clock-plate">
+            <span id="pro-clock">0000</span>
+          </div>
+
+          <!-- Mosazná cedulka se jménem dole -->
+          <div class="door-overlay-plate brass-plate">
+            <span>VLADIMÍR</span>
+            <span>NEŠETŘIL</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="door-label"    data-key="door1label">profesionální</div>
+    </a>
+
+    <!-------------------- FANTASKNÍ --------------------------------------------------------------->
+    <a class="door-wrap door-fantasy" href="./creative/index.html">
+      <div class="section-label" data-key="sec2">Život</div>
+      <div class="door-frame">
+        <div class="door-light"></div>
+        <div class="door-edge-glow"></div>
+
+        <!-- Obrázek dveří – bez cedulky, jméno Jers je součástí ilustrace -->
+        <div class="door-img-wrap">
+          <img src="https://i.imgur.com/E0RdeQr.jpg" alt="Fantaskní dveře">
+        </div>
+
+      </div>
+
+      <div class="door-label"    data-key="door2label">světy fantasie</div>
+    </a>
+
+    <!---------------------------------------------- NEMOCNIČNÍ ------------------------------------>
+    <a class="door-wrap door-hosp" href="./health/index.html">
+      <div class="section-label" data-key="sec3">Rovnováha</div>
+      <div class="door-frame">
+        <div class="door-light"></div>
+        <div class="door-edge-glow"></div>
+
+        <!-- Obrázek dveří -->
+        <div class="door-img-wrap">
+          <img src="https://i.imgur.com/2LqMDyu.jpg" alt="Nemocniční dveře">
+
+          <!-- Datum nahoře – den · měsíc -->
+          <div class="door-overlay-plate date-plate">
+            <span id="hosp-date">1 · 1</span>
+          </div>
+
+          <!-- Nemocniční jmenovka se jménem dole -->
+          <div class="door-overlay-plate hosp-plate">
+            <span>Láďa N.</span>
+          </div>
+        </div>
+
+      </div>
+      <div class="door-label"    data-key="door3label">zdraví & tělo</div>
+    </a>
+
+  </div><!-- /doors -->
+
+  <footer class="site-footer">
+    <span data-key="footer">Kam chcete vstoupit?</span>
+  </footer>
+</div>
+
+<script>
+  /* ============================================================
+     PŘEKLADY – všechny texty pro každý jazyk
+     Klíče (sec1, door1name, ...) odpovídají atributu data-key
+     v HTML elementech. Přidáš jazyk? Přidej sem další blok.
+     ============================================================ */
+  const i18n = {
+    cs: {
+      subtitle:  'Troje dveře. Tři světy.',
+      sec1:      'Práce',              /* nápis nad profesionálními dveřmi */
+      sec2:      'Život',              /* nápis nad fantaskními dveřmi */
+      sec3:      'Rovnováha',          /* nápis nad nemocničními dveřmi */
+      door1name: 'Vladimír Nešetřil',
+      door1label:'Profesionální',
+      door2name: 'Jers',
+      door2label:'Světy fantasie',
+      door3name: 'Láďa N.',
+      door3label:'Zdraví & tělo',
+      door3room: 'zdraví',             /* malý text uvnitř jmenovky na dveřích */
+      footer:    'Do kterých vstoupíte?'
+    },
+    en: {
+      subtitle:  'Three doors. Three worlds.',
+      sec1:      'Work',
+      sec2:      'Life',
+      sec3:      'Balance',
+      door1name: 'Vladimir Nesetril',
+      door1label:'Professional',
+      door2name: 'Jers',
+      door2label:'Fantastic worlds',
+      door3name: 'Láďa N.',
+      door3label:'Health & body',
+      door3room: 'Health',
+      footer:    'Which one you choose?'
+    },
+    de: {
+      subtitle:  'Drei Türen. Drei Welten.',
+      sec1:      'Arbeit',
+      sec2:      'Leben',
+      sec3:      'Balance',
+      door1name: 'Vladimir Nesetril',
+      door1label:'Professionell',
+      door2name: 'Jers',
+      door2label:'Fantasiewelten',
+      door3name: 'Láďa N.',
+      door3label:'Gesundheit & Körper',
+      door3room: 'Gesundheit',
+      footer:    'Welches würdest Sie wählen?.'
+    }
+  };
+
+  /* ============================================================
+     PŘEPNUTÍ JAZYKA
+     Volá se kliknutím na tlačítka CS / EN / DE.
+     Projde všechny elementy s atributem data-key a přepíše text.
+     ============================================================ */
+  function setLang(lang) {
+    /* Zvýraznění aktivního tlačítka */
+    document.querySelectorAll('.lang-btn').forEach(btn =>
+      btn.classList.toggle('active', btn.textContent === lang.toUpperCase())
+    );
+
+    /* Přepis všech textů na stránce */
+    const texty = i18n[lang];
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const klic = el.getAttribute('data-key');
+      if (texty[klic] !== undefined) el.textContent = texty[klic];
+    });
+
+    /* Nastavení jazyka pro prohlížeč (přístupnost) */
+    document.documentElement.lang = lang;
+  }
+
+  /* Spustíme češtinu jako výchozí jazyk */
+  setLang('cs');
+
+
+  /* ============================================================
+     ŽIVÉ HODINY A DATUM
+     Profesionální dveře: aktuální čas ve formátu HHMM (bez dvojtečky)
+     Nemocniční dveře:    dnešní datum ve formátu D · M
+     Aktualizuje se každých 30 sekund.
+     ============================================================ */
+
+  /* Pomocná funkce – doplní nulu před jednociferné číslo (7 → "07") */
+  function pad(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function tick() {
+    const ted = new Date();
+
+    /* Čas na profesionálních dveřích – např. 2204 = 22h04m */
+    const hodiny = document.getElementById('pro-clock');
+    if (hodiny) {
+      hodiny.textContent = pad(ted.getHours()) + pad(ted.getMinutes());
+    }
+
+    /* Datum na nemocničních dveřích – např. 12 · 5 = 12. května */
+    const datum = document.getElementById('hosp-date');
+    if (datum) {
+      datum.textContent = ted.getDate() + ' · ' + (ted.getMonth() + 1);
+    }
+  }
+
+  tick();                        /* spustit hned při načtení */
+  setInterval(tick, 30000);      /* opakovat každých 30 000ms = 30 sekund */
+</script>
+</body>
+</html>
