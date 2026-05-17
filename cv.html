@@ -64,20 +64,29 @@ html, body {
 }
 
 /* ── NADPIS + OSA – vertikálně vycentrováno ── */
+/* Osa – vycentrovaná na střed stránky */
 .cv-panel {
   position:absolute; inset:0;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  padding:4rem 0 0;
+  padding:0;
   z-index:10;
   pointer-events:none;
 }
 
+/* Nadpis – absolutně, nezávisle na ose.
+   Posun: změň 'top' (nahoru/dolů) nebo 'left' (vodorovně, 50%=střed) */
 .cv-title {
+  position:absolute;
+  top:1.8rem;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:15;
   font-family:'Cinzel',serif; color:#e8d5a8;
   font-size:clamp(0.75rem,1.4vw,1.1rem); letter-spacing:0.3em;
-  text-align:center; margin-bottom:-2.5rem;
+  text-align:center; white-space:nowrap;
   text-shadow:0 2px 14px rgba(0,0,0,0.75);
+  pointer-events:none;
 }
 
 .svg-outer {
