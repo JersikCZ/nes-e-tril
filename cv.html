@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vladimír Nešetřil – Profesní dráha</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#1a0f08;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.scene {
+  position:relative;
+  width:100vw; height:100vh;
+  min-width:600px;
+  overflow:hidden;
+}
+
+.office-bg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+  user-select:none; pointer-events:none;
+}
+
+.scene-overlay {
+  position:absolute; inset:0;
+  background:rgba(15,8,2,0.38);
+  pointer-events:none;
+}
+
+/* ── ZPĚT ── */
+.back-btn {
+  position:absolute; top:1.2rem; left:1.2rem; z-index:50;
+  font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.18em;
+  color:rgba(212,168,90,0.75); text-decoration:none;
+  border:1px solid rgba(212,168,90,0.3); padding:0.35rem 0.9rem;
+  border-radius:20px; background:rgba(10,5,2,0.45); backdrop-filter:blur(4px);
+  transition:all 0.25s;
+}
+.back-btn:hover { color:#d4a85a; border-color:rgba(212,168,90,0.7); background:rgba(10,5,2,0.65); }
+
+/* ── JAZYKY ── */
+.lang-btns {
+  position:absolute; top:1.2rem; right:1.2rem; z-index:50;
+  display:flex; gap:6px;
+}
+.lang-btn {
+  font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.12em;
+  border:1px solid rgba(212,168,90,0.35); background:rgba(10,5,2,0.45);
+  backdrop-filter:blur(4px); color:rgba(212,168,90,0.65);
+  border-radius:20px; padding:3px 11px; cursor:pointer; transition:all 0.2s;
+}
+.lang-btn.active,.lang-btn:hover {
+  background:rgba(212,168,90,0.75); color:#1a0f08; border-color:transparent;
+}
+
+/* ── NADPIS + OSA – vertikálně vycentrováno ── */
+.cv-panel {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:4rem 0 0;
+  z-index:10;
+  pointer-events:none;
+}
+
+.cv-title {
+  font-family:'Cinzel',serif; color:#e8d5a8;
+  font-size:clamp(0.75rem,1.4vw,1.1rem); letter-spacing:0.3em;
+  text-align:center; margin-bottom:2.5rem;
+  text-shadow:0 2px 14px rgba(0,0,0,0.75);
+}
+
+.svg-outer {
+  width:100%; overflow:visible;
+  pointer-events:all;
+}
+
+/* SVG */
+.tl-year {
+  font-family:'Cinzel',serif; font-size:12px;
+  font-weight:600; text-anchor:middle;
+}
+.tl-dot-group { cursor:pointer; }
+.tl-dot-group .dot-ring { transition:stroke-width 0.2s, opacity 0.2s; }
+.tl-dot-group:hover .dot-ring { stroke:rgba(255,255,255,0.9) !important; stroke-width:3 !important; }
+.tl-dot-group.active .dot-ring { stroke:#fff !important; stroke-width:4 !important; opacity:1 !important; }
+
+/* ── DETAIL PANEL – vyjíždí ze spodu jako overlay, stránka NEPOSKOČÍ ── */
+.detail-panel {
+  position:absolute;
+  left:50%;
+  bottom:2rem;
+  transform:translateX(-50%) translateY(30px);
+  width:min(820px,88vw);
+  z-index:40;
+
+  background:rgba(10,5,1,0.84);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(212,168,90,0.18);
+  border-left:3px solid #e07820;
+  border-radius:12px;
+  padding:1rem 1.4rem 1rem 1.1rem;
+
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.3s ease, transform 0.3s ease;
+}
+.detail-panel.visible {
+  opacity:1;
+  pointer-events:all;
+  transform:translateX(-50%) translateY(0);
+}
+
+.dp-close {
+  position:absolute; top:0.55rem; right:0.75rem;
+  background:none; border:none; cursor:pointer;
+  color:rgba(212,168,90,0.4); font-size:1.1rem; line-height:1;
+  transition:color 0.2s; font-family:sans-serif;
+}
+.dp-close:hover { color:rgba(212,168,90,1); }
+
+.dp-top {
+  display:flex; align-items:baseline;
+  gap:0.8rem; margin-bottom:0.35rem;
+  flex-wrap:wrap; padding-right:1.6rem;
+}
+.dp-role {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(0.88rem,1.3vw,1.02rem);
+  font-weight:600; color:#f0e0c0; line-height:1.3;
+}
+.dp-period {
+  font-family:'Cinzel',serif; font-size:0.58rem;
+  letter-spacing:0.12em; color:rgba(212,168,90,0.7);
+}
+.dp-text {
+  font-size:clamp(0.72rem,1.05vw,0.82rem);
+  color:rgba(220,200,160,0.88); line-height:1.7;
+}
+.dp-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:0.5rem; }
+.dp-tag {
+  font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.08em;
+  padding:2px 8px; border-radius:20px;
+  background:rgba(212,168,90,0.1);
+  border:1px solid rgba(212,168,90,0.22);
+  color:rgba(212,168,90,0.8);
+}
+
+/* ── MOBIL ── */
+.rotate-notice {
+  display:none; position:fixed; inset:0; background:#1a0f08; z-index:999;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; color:#c8b882;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:1.1rem; text-align:center; padding:2rem;
+}
+.rotate-notice .arrow { font-size:3rem; animation:rotA 2s ease-in-out infinite; }
+@keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+@media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+</style>
+</head>
+<body>
+
+<div class="rotate-notice">
+  <div class="arrow">📱</div>
+  <div>Otočte prosím telefon<br>na šířku</div>
+</div>
+
+<div class="scene">
+  <img class="office-bg" src="https://i.imgur.com/iq9r3Lg.jpg" alt="Kancelář" draggable="false">
+  <div class="scene-overlay"></div>
+
+  <a class="back-btn" href="professional.html">← Zpět</a>
+
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('cs')">CZ</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('de')">DE</button>
+  </div>
+
+  <!-- Nadpis + osa – statické, nepohybuje se -->
+  <div class="cv-panel">
+    <div class="cv-title" id="cvTitle">Profesní dráha</div>
+    <div class="svg-outer">
+      <svg id="tlSvg" width="100%" viewBox="0 0 1100 190"
+           preserveAspectRatio="xMidYMid meet" overflow="visible"></svg>
+    </div>
+  </div>
+
+  <!-- Detail panel – absolutně přes obrázek, vyjíždí ze spodu -->
+  <div class="detail-panel" id="detailPanel">
+    <button class="dp-close" id="dpClose">✕</button>
+    <div class="dp-top">
+      <span class="dp-role" id="dpRole"></span>
+      <span class="dp-period" id="dpPeriod"></span>
+    </div>
+    <div class="dp-text" id="dpText"></div>
+    <div class="dp-tags" id="dpTags"></div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  { year:'2004', tc:'#f0d090', period:'1999–2004',
+    dot:{ type:'img', url:'https://www.spse.cz/css/spse-logo.png', bg:'#fff', crop:1 },
+    role:{cs:'Elektrotechnická SPŠ',en:'Electrotechnical Secondary School',de:'Elektrotechnische Fachschule'},
+    text:{
+      cs:'Středoškolské vzdělání v oboru elektrotechnika. Zakončeno maturitní zkouškou.',
+      en:'Secondary technical education in electrotechnics. Completed with a matriculation exam (A-level equivalent).',
+      de:'Technische Mittelschulausbildung in Elektrotechnik. Abgeschlossen mit der Reifeprüfung (Matura).'},
+    tags:['Elektrotechnika','Maturita'] },
+
+  { year:'2007', tc:'#f0d090', period:'2004–2007',
+    dot:{ type:'initials', text:'UPa', bg:'#002868', fg:'#fff' },
+    role:{cs:'Universita Pardubice – Filosofická fakulta',en:'University of Pardubice – Faculty of Arts',de:'Universität Pardubice – Philosophische Fakultät'},
+    text:{
+      cs:'Vysokoškolské vzdělání na Filosofické fakultě. Zakončeno bakalářskou zkouškou (Bc.).',
+      en:"University education at the Faculty of Arts. Completed with a Bachelor's degree (Bc.).",
+      de:'Hochschulausbildung an der Philosophischen Fakultät. Abgeschlossen mit dem Bachelor-Abschluss (Bc.).'},
+    tags:['VŠ','Bc.'] },
+
+  { year:'2008', tc:'#f0d090', period:'2007–2008',
+    dot:{ type:'initials', text:'FCN', bg:'#1a1a1a', fg:'#f0f0f0' },
+    role:{cs:'Foxconn CZ – Technik kvality',en:'Foxconn CZ – Quality Technician',de:'Foxconn CZ – Qualitätstechniker'},
+    text:{
+      cs:'Dohled nad výrobou, denní/týdenní/měsíční reporty, prezentace vedení (CZ & EN). Úvod do nástrojů kvality – flowchart, sběr dat. Elektrotechnická výroba – montáž notebooků.',
+      en:'Production oversight, daily/weekly/monthly reporting, presentations to management (CZ & EN). Introduction to quality tools – flowchart, data collection. Electronics manufacturing – laptop assembly.',
+      de:'Produktionsüberwachung, Berichte, Managementpräsentationen (CZ & EN). Einführung in Qualitätswerkzeuge. Elektronikmontage – Laptop-Fertigung.'},
+    tags:['Quality','Reporting','Elektronika'] },
+
+  { year:'2010', tc:'#f0d090', period:'2009–2010',
+    dot:{ type:'initials', text:'AS', bg:'#1a6a30', fg:'#fff' },
+    role:{cs:'Asseco Solutions – Junior obchodní zástupce',en:'Asseco Solutions – Junior Sales Representative',de:'Asseco Solutions – Junior Vertriebsmitarbeiter'},
+    text:{
+      cs:'Komunikace se zákazníky (telefon, email), příprava podkladů pro obchodníky v terénu, tvorba a úprava prezentací na míru.',
+      en:'Customer communication (phone, email), preparing materials for field sales representatives, creating and customising tailored presentations.',
+      de:'Kundenkommunikation (Telefon, E-Mail), Erstellung von Unterlagen für Außendienstmitarbeiter, maßgeschneiderte Präsentationen.'},
+    tags:['IT','Obchod','ERP'] },
+
+  { year:'2011', tc:'#f0d090', period:'2010–2011',
+    dot:{ type:'union' },
+    role:{cs:'Velká Británie – Zdravotní asistent',en:'United Kingdom – Healthcare Assistant',de:'Großbritannien – Pflegeassistent'},
+    text:{
+      cs:'Zahraniční zkušenost ve Velké Británii. Domácí 24hodinová zdravotní péče. Plné ponoření do anglicky mluvícího prostředí.',
+      en:'Work experience in the United Kingdom. 24-hour home healthcare. Full immersion in an English-speaking environment.',
+      de:'Arbeitserfahrung in Großbritannien. 24-Stunden-häusliche Pflege. Vollständige Immersion im englischsprachigen Umfeld.'},
+    tags:['UK','Healthcare','Angličtina'] },
+
+  { year:'2013', tc:'#f0d090', period:'2011–2013',
+    dot:{ type:'initials', text:'FCN', bg:'#1a1a1a', fg:'#f0f0f0' },
+    role:{cs:'Foxconn CZ – Vedoucí admin. pracovník',en:'Foxconn CZ – Senior Administrative Officer',de:'Foxconn CZ – Leitender Verwaltungsmitarbeiter'},
+    text:{
+      cs:'Komunikace se zákazníky, příjem a výdej zboží, logistika, zásobování, nákupní agenda, řešení dodavatelských reklamací.',
+      en:'Customer communication, goods receipt and dispatch, logistics, supply chain management, partial purchasing responsibilities, supplier claims resolution.',
+      de:'Kundenkommunikation, Wareneingang/-ausgang, Logistik, Versorgungsverantwortung, Einkaufsagenda, Lieferantenreklamationen.'},
+    tags:['Logistika','Zásobování','Reklamace'] },
+
+  { year:'2016', tc:'#f0d090', period:'2013–2016',
+    dot:{ type:'initials', text:'ČS', bg:'#00519c', fg:'#fff' },
+    role:{cs:'Česká spořitelna · Fio banka',en:'Česká spořitelna · Fio banka',de:'Česká spořitelna · Fio banka'},
+    text:{
+      cs:'Práce s klienty, obsluha pokladny, zpracování úvěrů. Zkušenosti z bankovního prostředí a finančních produktů.',
+      en:'Client service, cashier duties, loan processing. Experience in banking environment and financial products.',
+      de:'Kundenbetreuung, Kassiertätigkeit, Kreditbearbeitung. Erfahrung im Bankumfeld und mit Finanzprodukten.'},
+    tags:['Bankovnictví','Finance','Klienti'] },
+
+  { year:'2019', tc:'#f0d090', period:'2016–2019',
+    dot:{ type:'img', url:'https://www.megatech-career.com/wp-content/uploads/2020/12/megatech-logo-new.png', bg:'#fff', crop:0.33 },
+    role:{cs:'Megatech Industries – Inženýr zákaznické kvality (CQA)',en:'Megatech Industries – Customer Quality Engineer (CQA)',de:'Megatech Industries – Kundenqualitätsingenieur (CQA)'},
+    text:{
+      cs:'Rozvoj znalostí nástrojů kvality, vzorkování PPAP, služební cesty do Německa a Polska (Volkswagen). Seznámení se vstřikolisy.',
+      en:'Expanding quality tools knowledge, PPAP sampling, business trips to Germany and Poland (Volkswagen). Experience with injection moulding.',
+      de:'Ausbau von Qualitätswerkzeugkenntnissen, PPAP-Bemusterung, Dienstreisen nach Deutschland und Polen (Volkswagen). Erfahrung mit Spritzguss.'},
+    tags:['CQA','PPAP','Automotive','VW'] },
+
+  { year:'2025+', tc:'#f0d090', period:'2019–2025 · 2025+',
+    dot:{ type:'engeser' },
+    role:{cs:'Engeser – Inženýr kvality → Head of Quality (USA)',en:'Engeser – Quality Engineer → Head of Quality (USA)',de:'Engeser – Qualitätsingenieur → Head of Quality (USA)'},
+    text:{
+      cs:'Engeser CZ (2019–2025): Zákaznické i dodavatelské reklamace, mikroaudity, certifikační audity (dohled), EMPB/PPAP, Control Plány, vstupní požadavky, drátová výroba – krimpování, letování, svařování ultrazvukem.\nEngeser USA (2025+): Head of Quality – plná zodpovědnost za provoz výrobní společnosti na úrovni kvality.',
+      en:'Engeser CZ (2019–2025): Customer & supplier claims, micro-audits, certification audits (supervision), EMPB/PPAP, Control Plans, incoming inspection setup, wire production – crimping, soldering, ultrasonic welding.\nEngeser USA (2025+): Head of Quality – full quality responsibility for a US manufacturing site.',
+      de:'Engeser CZ (2019–2025): Kunden- & Lieferantenreklamationen, Mikroaudits, Zertifizierungsaudits (Aufsicht), EMPB/PPAP, Kontrollpläne, Eingangsprüfung, Drahtfertigung – Crimpen, Löten, Ultraschallschweißen.\nEngeser USA (2025+): Head of Quality – volle Qualitätsverantwortung für einen US-Produktionsstandort.'},
+    tags:['PPAP','EMPB','Audity','Head of Quality','USA'] },
+];
+
+let lang='cs', activeIdx=null;
+const ns='http://www.w3.org/2000/svg';
+const mkEl=(tag,attrs={})=>{ const e=document.createElementNS(ns,tag); Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); return e; };
+
+const svg      = document.getElementById('tlSvg');
+const panel    = document.getElementById('detailPanel');
+const btnClose = document.getElementById('dpClose');
+
+// Linka od samého okraje (usL=0, usR=W)
+const W=1100, LY=95, n=DATA.length;
+const usL=0, usR=W, step=(usR-usL)/(n-1);
+const R=34;
+
+/* DEFS */
+const defs=mkEl('defs');
+const pat=mkEl('pattern',{id:'uj',x:0,y:0,width:72,height:48,patternUnits:'userSpaceOnUse'});
+const mkR=(x,y,w,h,f)=>mkEl('rect',{x,y,width:w,height:h,fill:f});
+const mkL=(x1,y1,x2,y2,s,sw)=>{const l=mkEl('line',{x1,y1,x2,y2,stroke:s});l.setAttribute('stroke-width',sw);return l;};
+[mkR(0,0,72,48,'#002868'),
+ mkL(0,0,72,48,'#fff',14),mkL(72,0,0,48,'#fff',14),
+ mkL(0,0,72,48,'#C8102E',7),mkL(72,0,0,48,'#C8102E',7),
+ mkR(28,0,16,48,'#fff'),mkR(0,16,72,16,'#fff'),
+ mkR(31,0,10,48,'#C8102E'),mkR(0,19,72,10,'#C8102E')
+].forEach(e=>pat.appendChild(e));
+defs.appendChild(pat);
+
+DATA.forEach((_,i)=>{
+  const x=usL+i*step;
+  const cp=mkEl('clipPath',{id:`cp${i}`});
+  cp.appendChild(mkEl('circle',{cx:x,cy:LY,r:R}));
+  defs.appendChild(cp);
+});
+svg.appendChild(defs);
+
+/* LINKA – přesah mimo viewbox na obě strany */
+const seg=(x1,x2,lc='butt')=>{
+  const l=mkEl('line',{x1,y1:LY,x2,y2:LY,stroke:'#e07820'});
+  l.setAttribute('stroke-width','22');
+  l.setAttribute('stroke-linecap',lc);
+  return l;
+};
+svg.appendChild(seg(-100, W+100, 'round'));
+
+/* BODY */
+const dotGroups=[];
+DATA.forEach((item,i)=>{
+  const x=usL+i*step, y=LY;
+  const g=mkEl('g',{class:'tl-dot-group'});
+
+  const bg=mkEl('circle',{cx:x,cy:y,r:R,fill:'#fff'});
+  g.appendChild(bg);
+
+  const d=item.dot;
+  if(d.type==='union'){
+    bg.setAttribute('fill','#002868');
+    g.appendChild(mkEl('circle',{cx:x,cy:y,r:R,fill:'url(#uj)','clip-path':`url(#cp${i})`}));
+  } else if(d.type==='engeser'){
+    bg.setAttribute('fill','#cc0000');
+    const t=mkEl('text',{x,y:y+2,fill:'#fff','text-anchor':'middle','dominant-baseline':'middle',
+      'font-family':'Arial,sans-serif','font-size':'26','font-weight':'800'});
+    t.textContent='E'; g.appendChild(t);
+  } else if(d.type==='img'){
+    bg.setAttribute('fill',d.bg||'#fff');
+    const dispW=(R*2)/(d.crop||1);
+    g.appendChild(mkEl('image',{
+      href:d.url, x:x-R, y:y-R,
+      width:dispW, height:R*2,
+      'clip-path':`url(#cp${i})`,
+      preserveAspectRatio:'xMinYMid meet'
+    }));
+  } else {
+    bg.setAttribute('fill',d.bg);
+    const t=mkEl('text',{x,y:y+1,fill:d.fg,'text-anchor':'middle','dominant-baseline':'middle',
+      'font-family':'Cinzel,serif','font-size':'13','font-weight':'600'});
+    t.textContent=d.text; g.appendChild(t);
+  }
+
+  const ring=mkEl('circle',{cx:x,cy:y,r:R,fill:'none',stroke:'rgba(255,255,255,0.45)',class:'dot-ring'});
+  ring.setAttribute('stroke-width','2');
+  g.appendChild(ring);
+
+  const lbl=mkEl('text',{x,y:i%2===0?y-R-12:y+R+22,class:'tl-year',fill:item.tc});
+  lbl.textContent=item.year;
+  g.appendChild(lbl);
+
+  svg.appendChild(g);
+  dotGroups.push(g);
+
+  g.addEventListener('click',()=>{
+    if(activeIdx===i){ closePanel(); }
+    else {
+      activeIdx=i;
+      dotGroups.forEach(d=>d.classList.remove('active'));
+      g.classList.add('active');
+      renderPanel(i);
+    }
+  });
+});
+
+function renderPanel(i){
+  const item=DATA[i];
+  document.getElementById('dpRole').textContent=item.role[lang];
+  document.getElementById('dpPeriod').textContent=item.period;
+  document.getElementById('dpText').innerHTML=(item.text[lang]||'').replace(/\n/g,'<br>');
+  const tags=document.getElementById('dpTags');
+  tags.innerHTML='';
+  item.tags.forEach(t=>{
+    const s=document.createElement('span');
+    s.className='dp-tag'; s.textContent=t; tags.appendChild(s);
+  });
+  panel.classList.add('visible');
+}
+
+function closePanel(){
+  activeIdx=null;
+  panel.classList.remove('visible');
+  dotGroups.forEach(d=>d.classList.remove('active'));
+}
+
+btnClose.addEventListener('click', closePanel);
+
+const titles={cs:'Profesní dráha',en:'Professional Journey',de:'Beruflicher Werdegang'};
+function setLang(l){
+  lang=l;
+  document.getElementById('cvTitle').textContent=titles[l];
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));
+  if(activeIdx!==null) renderPanel(activeIdx);
+}
+</script>
+</body>
+</html>
