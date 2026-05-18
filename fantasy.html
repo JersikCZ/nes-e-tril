@@ -38,29 +38,23 @@
     cursor: pointer;
     text-decoration: none;
   }
-
   .hotspot::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(212, 168, 90, 0.50) 0%,
-      transparent 75%
-    );
+    background: radial-gradient(ellipse at center, rgba(212,168,90,0.50) 0%, transparent 75%);
     opacity: 0;
     transition: opacity 0.35s ease;
     border-radius: inherit;
   }
   .hotspot:hover::after { opacity: 1; }
-
   .hotspot .tip {
     position: absolute;
     bottom: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(10, 6, 3, 0.88);
-    border: 1px solid rgba(212, 168, 90, 0.4);
+    background: rgba(10,6,3,0.88);
+    border: 1px solid rgba(212,168,90,0.4);
     color: #d4a85a;
     font-family: 'Cinzel', serif;
     font-size: clamp(0.55rem, 0.9vw, 0.8rem);
@@ -73,12 +67,143 @@
   }
   .hotspot:hover .tip { opacity: 1; }
 
-  /* Pozici dveří dolaď pomocí souřadnicového helperu níže */
   #hotspot-door {
     left:   2%;
     bottom: 2%;
     width:  25%;
     height: 50%;
+  }
+
+  /* ── VZNÁŠEJÍCÍ SE KNÍŽKY ── */
+  .book {
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    transform-origin: center center;
+    transition: filter 0.3s ease;
+  }
+
+  .book img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+  }
+
+  .book:hover {
+    z-index: 30 !important;
+  }
+  .book:hover img {
+    filter: brightness(1.3) drop-shadow(0 0 22px var(--glow));
+  }
+
+  /* Tooltip */
+  .book-tip {
+    position: absolute;
+    bottom: -1.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,6,3,0.88);
+    border: 1px solid rgba(212,168,90,0.4);
+    color: #d4a85a;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.5rem, 0.85vw, 0.72rem);
+    letter-spacing: 0.15em;
+    padding: 0.25rem 0.6rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    border-radius: 4px;
+  }
+  .book:hover .book-tip { opacity: 1; }
+
+  /* Animace vznášení */
+  @keyframes float1 {
+    0%,100% { transform: translateY(0px)   rotate(var(--tilt)); }
+    50%      { transform: translateY(-14px) rotate(var(--tilt)); }
+  }
+  @keyframes float2 {
+    0%,100% { transform: translateY(-8px)  rotate(var(--tilt)); }
+    50%      { transform: translateY(8px)   rotate(var(--tilt)); }
+  }
+  @keyframes float3 {
+    0%,100% { transform: translateY(4px)   rotate(var(--tilt)); }
+    50%      { transform: translateY(-12px) rotate(var(--tilt)); }
+  }
+  @keyframes float4 {
+    0%,100% { transform: translateY(-4px)  rotate(var(--tilt)); }
+    50%      { transform: translateY(10px)  rotate(var(--tilt)); }
+  }
+
+  /* ── JEDNOTLIVÉ KNÍŽKY ──
+     Pozice dolaď pomocí souřadnicového helperu.
+     left/top = střed knížky na ose, width = velikost
+  ── */
+
+  /* Raido – Hudba – fialová záře */
+  #book-raido {
+    --tilt: -8deg;
+    --glow: rgba(140, 60, 220, 0.9);
+    left: 22%;
+    top:  28%;
+    width: clamp(90px, 11vw, 165px);
+    aspect-ratio: 1;
+    z-index: 10;
+    animation: float1 4.2s ease-in-out infinite;
+    filter: drop-shadow(0 8px 16px rgba(120,40,180,0.45));
+  }
+
+  /* Pertho – D&D – zelená záře */
+  #book-pertho {
+    --tilt: 6deg;
+    --glow: rgba(40, 180, 80, 0.9);
+    left: 38%;
+    top:  20%;
+    width: clamp(90px, 11vw, 165px);
+    aspect-ratio: 1;
+    z-index: 11;
+    animation: float2 3.8s ease-in-out infinite;
+    animation-delay: 0.6s;
+    filter: drop-shadow(0 8px 16px rgba(30,130,60,0.45));
+  }
+
+  /* Wunjo – Povídky – zlatá záře */
+  #book-wunjo {
+    --tilt: -4deg;
+    --glow: rgba(220, 170, 40, 0.9);
+    left: 54%;
+    top:  25%;
+    width: clamp(90px, 11vw, 165px);
+    aspect-ratio: 1;
+    z-index: 12;
+    animation: float3 4.6s ease-in-out infinite;
+    animation-delay: 1.1s;
+    filter: drop-shadow(0 8px 16px rgba(180,130,20,0.45));
+  }
+
+  /* Kennaz – Obrázky – tyrkysová záře */
+  #book-kennaz {
+    --tilt: 10deg;
+    --glow: rgba(40, 200, 200, 0.9);
+    left: 68%;
+    top:  30%;
+    width: clamp(90px, 11vw, 165px);
+    aspect-ratio: 1;
+    z-index: 13;
+    animation: float4 4.0s ease-in-out infinite;
+    animation-delay: 1.8s;
+    filter: drop-shadow(0 8px 16px rgba(20,160,160,0.45));
+  }
+
+  /* Hover – zastavení vznášení a zvětšení */
+  .book:hover {
+    animation-play-state: paused;
+  }
+  .book:hover img {
+    transform: scale(1.12);
+    transition: transform 0.3s ease;
   }
 
   /* ── SOUŘADNICOVÝ HELPER ── */
@@ -125,6 +250,30 @@
 
   <!-- DVEŘE – zpět na rozcestník -->
   <a class="hotspot" id="hotspot-door" href="index.html">
+  </a>
+
+  <!-- Raido – Hudba -->
+  <a class="book" id="book-raido" href="hudba.html">
+    <img src="book_raido.png" alt="Hudba">
+    <span class="book-tip">Hudba</span>
+  </a>
+
+  <!-- Pertho – D&D -->
+  <a class="book" id="book-pertho" href="dnd.html">
+    <img src="book_pertho.png" alt="D&D">
+    <span class="book-tip">D&amp;D</span>
+  </a>
+
+  <!-- Wunjo – Povídky -->
+  <a class="book" id="book-wunjo" href="povidky.html">
+    <img src="book_wunjo.png" alt="Povídky">
+    <span class="book-tip">Povídky</span>
+  </a>
+
+  <!-- Kennaz – Obrázky -->
+  <a class="book" id="book-kennaz" href="obrazky.html">
+    <img src="book_kennaz.png" alt="Obrázky">
+    <span class="book-tip">Obrázky</span>
   </a>
 
 </div>
