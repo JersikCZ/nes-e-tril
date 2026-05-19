@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Láďa Jers Nešetřil – Povídky</title>
+<div class="shelf-title" id="shelfTitle"> </div>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+background: url('wall_texture.jpg') repeat;
+background-size: 300px auto;
+
+  }
+
+  .scene {
+    position: relative;
+    width: 100vw; height: 100vh;
+    min-width: 600px;
+    overflow: hidden;
+  }
+
+  /* ── VRSTVY ──
+     1. černé pozadí (body)
+     2. knihy (z-index 10)
+     3. rám PNG (z-index 20)
+     4. hoverovaná kniha (z-index 30 – přeskočí rám!)
+  ── */
+
+  /* Rám – nejvyšší vrstva, PNG s černým pozadím které splyne */
+  .shelf-frame {
+    position: absolute; inset: 0;
+    width: 95%; height: 101%;
+    object-fit: contain;
+    object-position: center;
+    z-index: 20;
+    pointer-events: none;
+    user-select: none;
+    /* Černé pozadí obrázku splyne s černým pozadím stránky */
+
+  }
+
+.shelf-back {
+  position: absolute;
+  left: 16%; top: 20%;
+  width: 63%; height: 68%;
+  z-index: 5;
+  background: url('wood_back.jpg') repeat;
+  background-size: 100px auto;   
+  border-radius: 2px;
+}
+
+  /* ── ZPĚT ── */
+  .back-btn {
+    position: absolute;
+    top: 1.2rem; left: 1.2rem;
+    z-index: 50;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem; letter-spacing: 0.18em;
+    color: rgba(212,168,90,0.75);
+    text-decoration: none;
+    border: 1px solid rgba(212,168,90,0.3);
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    transition: all 0.25s;
+  }
+  .back-btn:hover {
+    color: #d4a85a;
+    border-color: rgba(212,168,90,0.7);
+    background: rgba(0,0,0,0.75);
+  }
+
+  /* ── JAZYKY ── */
+  .lang-btns {
+    position: absolute;
+    top: 1.2rem; right: 1.2rem;
+    z-index: 50;
+    display: flex; gap: 6px;
+  }
+  .lang-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    border: 1px solid rgba(212,168,90,0.35);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    color: rgba(212,168,90,0.65);
+    border-radius: 20px;
+    padding: 3px 11px; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: rgba(212,168,90,0.75);
+    color: #000; border-color: transparent;
+  }
+
+  /* ── NADPIS ── */
+  .shelf-title {
+    position: absolute;
+    top: 1.1rem; left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    font-family: 'Cinzel', serif;
+    color: #e8d5a8;
+    font-size: clamp(0.7rem, 1.3vw, 1rem);
+    letter-spacing: 0.25em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* ── POLICE – čtyři oblasti za rámem ── Pozice v procentech odpovídají otvorům v obrázku.  ── */
+  .shelf-area {
+    position: absolute;
+    display: flex;
+    align-items: flex-end; /* knihy stojí na spodní liště police */
+    justify-content: flex-start;
+    gap: 0.5%;
+    padding: 0 1%;
+    z-index: unset;
+/*     outline: 1px dashed rgba(255,100,100,0.4);*/  /* ladění */
+  }
+
+  /* Horní levá police */
+  #shelf-top-left {
+    left:   16%;
+    top:   21%;
+    width: 30%;
+    height: 28%;
+  justify-content: flex-end;
+  }
+
+  /* Horní pravá police */
+  #shelf-top-right {
+    left:  48.5%;
+    top:   21%;
+    width: 30%;
+    height: 28%;
+  }
+
+  /* Dolní levá police */
+  #shelf-bottom-left {
+    left:   16%;
+    top:   57%;
+    width: 30%;
+    height: 32%;
+  }
+
+  /* Dolní pravá police */
+  #shelf-bottom-right {
+    left:  48.5%;
+    top:   57%;
+    width: 30%;
+    height: 32%;
+  }
+
+  /* ── KNIHA ── */
+  .book-item {
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    text-decoration: none;
+    /* Výška knihy = 99% výšky police, šířka automatická */
+    height: 99%;
+    aspect-ratio: 1/4;
+    transition: transform 0.3s ease, z-index 0s;
+    z-index: 10;
+    transform-origin: bottom center;
+  }
+
+  .book-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 2px;
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.7);
+  }
+
+  /* Hover – kniha vyjede nahoru a zvětší se přes rám */
+  .book-item:hover {
+    transform: translateY(-5%) scale(1.35);
+    z-index: 30; /* přeskočí rám! */
+  }
+
+  /* Tooltip při hoveru */
+  .book-item .book-label {
+    position: absolute;
+    bottom: -2.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.88);
+    border: 1px solid rgba(212,168,90,0.4);
+    color: #d4a85a;
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.45rem, 0.7vw, 0.65rem);
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    border-radius: 4px;
+  }
+  .book-item:hover .book-label { opacity: 1; }
+
+  /* Vlaječka jazyka */
+  .book-item .book-flag {
+    position: absolute;
+    top: 0.2rem; right: 0.2rem;
+    font-size: clamp(0.5rem, 0.9vw, 0.8rem);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .book-item:hover .book-flag { opacity: 1; }
+
+  /* ── SOUŘADNICOVÝ HELPER ── */
+  #coords {
+    position: fixed;
+    bottom: 1rem; right: 1rem;
+    background: rgba(0,0,0,0.7);
+    color: #d4a85a;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 100;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── MOBIL ── */
+  .rotate-notice {
+    display: none;
+    position: fixed; inset: 0;
+    background: #000; z-index: 999;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem; color: #c8b882;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-size: 1.1rem;
+    text-align: center; padding: 2rem;
+  }
+  .rotate-notice .arrow { font-size: 3rem; animation: rotA 2s ease-in-out infinite; }
+  @keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+  @media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+</style>
+</head>
+<body>
+
+<div class="rotate-notice">
+  <div class="arrow">📱</div>
+  <div>Otočte prosím telefon<br>na šířku</div>
+</div>
+
+<div class="scene" id="scene">
+
+  <!-- VRSTVA 3 – rám (nejvyšší, průhledné části splývají s černým pozadím) -->
+  <img class="shelf-frame" src="literature.png" alt="Knihovna">
+<div class="shelf-back"></div>
+
+
+  <!-- Zpět -->
+  <a class="back-btn" href="fantasy.html">←</a>
+
+  <!-- Jazyky -->
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('cs')">CZ</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('de')">DE</button>
+  </div>
+
+  <!-- VRSTVA 2 – police s knihami (za rámem) -->
+
+  <!-- Horní levá police -->
+  <div class="shelf-area" id="shelf-top-left">
+    <!-- Knihy se vloží JavaScriptem -->
+  </div>
+
+  <!-- Horní pravá police -->
+  <div class="shelf-area" id="shelf-top-right">
+  </div>
+
+  <!-- Dolní levá police -->
+  <div class="shelf-area" id="shelf-bottom-left">
+  </div>
+
+  <!-- Dolní pravá police -->
+  <div class="shelf-area" id="shelf-bottom-right">
+  </div>
+
+</div>
+
+<div id="coords">x: 0% | y: 0%</div>
+
+<script>
+/* ── DATA – tvé povídky ──
+   Přidávej sem nové záznamy jak budeš psát.
+   shelf: 'tl'=top-left, 'tr'=top-right, 'bl'=bottom-left, 'br'=bottom-right
+   lang: 'cs' / 'en' / 'de'
+   cover: cesta k obrázku obálky
+   url: odkaz na Google Doc nebo html stránku povídky
+── */
+const BOOKS = [
+  {
+    title: { cs: 'Vlevo nahoře', en: 'Sample Story', de: 'Beispielgeschichte' },
+    lang: 'cs',
+    genre: 'fantasy',
+    cover: 'book0.png', /* nahraď obrázkem obálky */
+    url: '#',                        /* nahraď odkazem na Google Doc */
+    shelf: 'tl'
+  },
+
+{
+  title: { cs: 'Druhá povídka', en: 'Second Story', de: 'Zweite Geschichte' },
+  lang: 'cs',
+  genre: 'fantasy',
+  cover: 'book1.png',
+  url: '#',
+  shelf: 'tl'
+},
+
+  {
+    title: { cs: 'Vpravo nahoře', en: 'Sample Story', de: 'Beispielgeschichte' },
+    lang: 'cs',
+    genre: 'fantasy',
+    cover: 'book1.png', /* nahraď obrázkem obálky */
+    url: '#',                        /* nahraď odkazem na Google Doc */
+    shelf: 'tr'
+  },
+
+ {
+    title: { cs: 'Vlevo Dole', en: 'Sample Story', de: 'Beispielgeschichte' },
+    lang: 'cs',
+    genre: 'fantasy',
+    cover: 'book1.png', /* nahraď obrázkem obálky */
+    url: '#',                        /* nahraď odkazem na Google Doc */
+    shelf: 'bl'
+  },
+
+ {
+    title: { cs: 'Vpravo dole', en: 'Sample Story', de: 'Beispielgeschichte' },
+    lang: 'cs',
+    genre: 'fantasy',
+    cover: 'book0.png', /* nahraď obrázkem obálky */
+    url: '#',                        /* nahraď odkazem na Google Doc */
+    shelf: 'br'
+  },
+
+  /* Sem přidávej další povídky: */
+  /* {
+    title: { cs: '...', en: '...', de: '...' },
+    lang: 'en',
+    genre: 'scifi',
+    cover: 'cover_moje_povidka.png',
+    url: 'https://docs.google.com/...',
+    shelf: 'tr'
+  }, */
+];
+
+const FLAGS = { cs: '🇨🇿', en: '🇬🇧', de: '🇩🇪' };
+const SHELVES = {
+  tl: document.getElementById('shelf-top-left'),
+  tr: document.getElementById('shelf-top-right'),
+  bl: document.getElementById('shelf-bottom-left'),
+  br: document.getElementById('shelf-bottom-right'),
+};
+
+let lang = 'cs';
+
+function renderBooks() {
+  Object.values(SHELVES).forEach(s => s.innerHTML = '');
+  BOOKS.forEach(book => {
+    const shelf = SHELVES[book.shelf];
+    if (!shelf) return;
+
+    const a = document.createElement('a');
+    a.className = 'book-item';
+    a.href = book.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    const img = document.createElement('img');
+    img.src = book.cover;
+    img.alt = book.title[lang] || book.title.cs;
+
+    const label = document.createElement('span');
+    label.className = 'book-label';
+    label.textContent = book.title[lang] || book.title.cs;
+
+    const flag = document.createElement('span');
+    flag.className = 'book-flag';
+    flag.textContent = FLAGS[book.lang] || '';
+
+    a.appendChild(img);
+    a.appendChild(label);
+    a.appendChild(flag);
+    shelf.appendChild(a);
+  });
+}
+
+const TITLES = {
+  cs: ' ',
+  en: ' ',
+  de: ' '
+};
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('shelfTitle').textContent = TITLES[l];
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent === l.toUpperCase())
+  );
+  renderBooks();
+}
+
+renderBooks();
+
+/* Souřadnicový helper */
+const scene  = document.getElementById('scene');
+const coords = document.getElementById('coords');
+scene.addEventListener('mousemove', e => {
+  const r = scene.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width  * 100).toFixed(1);
+  const y = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
+  coords.textContent = `x: ${x}% | y: ${y}%`;
+});
+</script>
+
+</body>
+</html>
