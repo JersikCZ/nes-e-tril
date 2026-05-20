@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Láďa Jers Nešetřil – Povídky</title>
+<title>Láďa Jers Nešetřil – Literas</title>
 <div class="shelf-title" id="shelfTitle"> </div>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
@@ -13,8 +13,7 @@
   html, body {
     width: 100%; height: 100%;
     overflow: hidden;
-background: url('wall_texture.jpg') repeat;
-background-size: 300px auto;
+background: black;
 
   }
 
@@ -50,9 +49,9 @@ background-size: 300px auto;
   left: 16%; top: 20%;
   width: 63%; height: 68%;
   z-index: 5;
-  background: url('wood_back.jpg') repeat;
+ /*  background: url('wood_back.jpg') repeat;
   background-size: 100px auto;   
-  border-radius: 2px;
+  border-radius: 2px; SCHOVANE POZADI */
 }
 
   /* ── ZPĚT ── */
@@ -123,40 +122,40 @@ background-size: 300px auto;
     gap: 0.5%;
     padding: 0 1%;
     z-index: unset;
-/*     outline: 1px dashed rgba(255,100,100,0.4);*/  /* ladění */
+     outline: 10px dashed rgba(255,100,100,0.4);  /* ladění */
   }
 
   /* Horní levá police */
   #shelf-top-left {
-    left:   16%;
-    top:   21%;
-    width: 30%;
-    height: 28%;
+    left:   29%;
+    top:   25.5%;
+    width: 18.5%;
+    height: 19%;
   justify-content: flex-end;
   }
 
   /* Horní pravá police */
   #shelf-top-right {
-    left:  48.5%;
-    top:   21%;
-    width: 30%;
-    height: 28%;
+    left:  47.5%;
+    top:   25.5%;
+    width: 17.5%;
+    height: 19%;
   }
 
   /* Dolní levá police */
   #shelf-bottom-left {
-    left:   16%;
-    top:   57%;
-    width: 30%;
-    height: 32%;
+    left:   29%;
+    top:   48%;
+    width: 17.5%;
+    height: 19%;
   }
 
   /* Dolní pravá police */
   #shelf-bottom-right {
-    left:  48.5%;
-    top:   57%;
-    width: 30%;
-    height: 32%;
+    left:  47.5%;
+    top:   48%;
+    width: 18.5%;
+    height: 19%;
   }
 
   /* ── KNIHA ── */
@@ -184,8 +183,8 @@ background-size: 300px auto;
 
   /* Hover – kniha vyjede nahoru a zvětší se přes rám */
   .book-item:hover {
-    transform: translateY(-5%) scale(1.35);
-    z-index: 30; /* přeskočí rám! */
+    transform: translateY(-5%) scale(2.2);
+    z-index: 20; /* přeskočí rám! */
   }
 
   /* Tooltip při hoveru */
@@ -311,8 +310,8 @@ const BOOKS = [
     title: { cs: 'Vlevo nahoře', en: 'Sample Story', de: 'Beispielgeschichte' },
     lang: 'cs',
     genre: 'fantasy',
-    cover: 'book0.png', /* nahraď obrázkem obálky */
-    url: "https://docs.google.com/document/d/17UCDp2_HpISKmiTM_rwV-toadQjQpOzpEtvYJZGpDjI/pub",                        /* nahraď odkazem na Google Doc */
+    cover: 'Book0.png', /* nahraď obrázkem obálky */
+    url: 'https://docs.google.com/document/d/17UCDp2_HpISKmiTM_rwV-toadQjQpOzpEtvYJZGpDjI/edit?tab=t.0',                        /* nahraď odkazem na Google Doc */
     shelf: 'tl'
   },
 
@@ -326,11 +325,11 @@ const BOOKS = [
 },
 
   {
-    title: { cs: 'Vpravo nahoře', en: 'Sample Story', de: 'Beispielgeschichte' },
-    lang: 'cs',
+    title: { cs: 'Válečné povídky', en: 'War stories', de: 'Kriegsgeschichte' },
+    lang: 'en',
     genre: 'fantasy',
     cover: 'book1.png', /* nahraď obrázkem obálky */
-    url: '#',                        /* nahraď odkazem na Google Doc */
+    url: "https://docs.google.com/document/d/17UCDp2_HpISKmiTM_rwV-toadQjQpOzpEtvYJZGpDjI/edit?usp=sharing",                        /* nahraď odkazem na Google Doc */
     shelf: 'tr'
   },
 
