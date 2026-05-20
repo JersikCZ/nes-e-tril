@@ -396,7 +396,7 @@ function renderBooks() {
     label.textContent = (book.title[lang] || book.title.cs) + '\n' + (FLAGS[book.lang] || '');
 
     const flag = document.createElement('span');
-    flag.className = 'book-flag';
+    
     flag.textContent = FLAGS[book.lang] || '';
 
     a.appendChild(img);
