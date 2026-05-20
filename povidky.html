@@ -200,11 +200,14 @@ background: black;
     font-size: clamp(0.45rem, 0.7vw, 0.65rem);
     letter-spacing: 0.1em;
     padding: 0.2rem 0.5rem;
-    white-space: nowrap;
+    white-space: pre-line;
+    min-width: 8rem;
+    text-align: center;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;
     border-radius: 4px;
+    white-space: pre-line;
   }
   .book-item:hover .book-label { opacity: 1; }
 
@@ -307,10 +310,10 @@ background: black;
 ── */
 const BOOKS = [
   {
-    title: { cs: 'Vlevo nahoře', en: 'Sample Story', de: 'Beispielgeschichte' },
+    title: { cs: 'DnD \n Saly Mangrave', en: 'DnD \n Saly Mangrave', de: 'DnD \n Saly Mangrave' },
     lang: 'en',
     genre: 'fantasy',
-    cover: 'book0.png', /* nahraď obrázkem obálky */
+    cover: 'book2.png', /* nahraď obrázkem obálky */
     url: "https://docs.google.com/document/d/16NO300-eInBXOZvw-2iVn6XokSwvLQGOraBNEAQgmzs/edit?usp=sharing",                        /* nahraď odkazem na Google Doc */
     shelf: 'tl'
   },
@@ -338,7 +341,7 @@ const BOOKS = [
     lang: 'cs',
     genre: 'fantasy',
     cover: 'book1.png', /* nahraď obrázkem obálky */
-    url: "https://docs.google.com/document/d/16Zs-P3_WKIFemIkruo546ZQzqTid_exwQQZY4LRl86o/edit?usp=sharing",                        /* nahraď odkazem na Google Doc */
+    url: '#',                        /* nahraď odkazem na Google Doc */
     shelf: 'bl'
   },
 
