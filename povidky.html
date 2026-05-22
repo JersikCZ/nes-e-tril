@@ -122,7 +122,7 @@ background: black;
     gap: 0.5%;
     padding: 0 1%;
     z-index: unset;
-    /*  outline: 10px dashed rgba(255,100,100,0.4);  ladění */
+/*     outline: 10px dashed rgba(255,100,100,0.4);   ladění */
   }
 
   /* Horní levá police */
@@ -222,20 +222,6 @@ background: black;
   }
   .book-item:hover .book-flag { opacity: 1; }
 
-  /* ── SOUŘADNICOVÝ HELPER ── */
-  #coords {
-    position: fixed;
-    bottom: 1rem; right: 1rem;
-    background: rgba(0,0,0,0.7);
-    color: #d4a85a;
-    font-family: monospace;
-    font-size: 0.75rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
-    pointer-events: none;
-    z-index: 100;
-    letter-spacing: 0.1em;
-  }
 
   /* ── MOBIL ── */
   .rotate-notice {
@@ -251,6 +237,209 @@ background: black;
   .rotate-notice .arrow { font-size: 3rem; animation: rotA 2s ease-in-out infinite; }
   @keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
   @media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+
+  /* ══════════════════════════════════════════════
+     OVERLAY – OTEVŘENÁ KNIHA
+     Dva režimy:
+       .book-overlay            = výběr kapitol
+       .book-overlay.reading    = čtení PDF
+     ══════════════════════════════════════════════ */
+  .book-overlay {
+    position: fixed; inset: 0;
+    z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(5px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .book-overlay.visible { opacity: 1; pointer-events: all; }
+
+  /* ── Kniha – základní kontejner ── */
+  .open-book {
+    position: relative;
+    width: min(940px, 90vw);
+    height: min(740px, 78vh);
+    /* Zlatý rámeček se zlatým vlnkováním */
+    border: 6px solid #c8952a;
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 2px #f0d060,
+      0 0 0 4px #8b5a10,
+      0 25px 60px rgba(0,0,0,0.85);
+    background: #f8f0e0;
+    display: flex;
+    overflow: hidden;
+    transition: width 0.55s ease, height 0.55s ease, border-radius 0.55s ease;
+  }
+
+  /* Zlaté vlnkování – SVG jako background na border */
+  .open-book::before {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 6px,
+      rgba(240,208,80,0.35) 6px, rgba(240,208,80,0.35) 7px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LEVÁ STRÁNKA ── */
+  .book-left {
+    width: 50%;
+    min-width: 50%;
+    background: linear-gradient(160deg, #fdfaf3 0%, #f5ecda 100%);
+    padding: 2.2rem 1.6rem 2rem;
+    display: flex; flex-direction: column; justify-content: center;
+    border-right: 1.5px solid #1a1a1a;
+    position: relative;
+    z-index: 1;
+    transition: width 0.55s ease, min-width 0.55s ease, padding 0.55s ease;
+    overflow: hidden;
+  }
+  /* Stínování hřbetu uprostřed */
+  .book-left::after {
+    content: '';
+    position: absolute; top: 0; right: 0; bottom: 0; width: 12px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08));
+    pointer-events: none;
+  }
+
+  .book-series {
+    font-family: 'Cinzel', serif;
+    color: #8b5a10;
+    font-size: clamp(0.55rem, 0.85vw, 0.72rem);
+    letter-spacing: 0.28em;
+    margin-bottom: 0.6rem;
+    opacity: 0.75;
+  }
+  .book-main-title {
+    font-family: 'Cinzel', serif;
+    color: #2a1200;
+    font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+    margin-bottom: 0.9rem;
+  }
+  .book-description {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: #5a3a10;
+    font-size: clamp(0.72rem, 1vw, 0.88rem);
+    line-height: 1.65;
+  }
+  .book-flag-large { font-size: 1.6rem; margin-top: 1.2rem; }
+
+  /* Tlačítko zpět (skryté v normálním režimu, viditelné při čtení) */
+  .btn-back-book {
+    display: none;
+    margin-top: auto;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem; letter-spacing: 0.15em;
+    color: #5a3a10;
+    background: none; border: 1px solid rgba(90,58,16,0.35);
+    border-radius: 20px; padding: 0.3rem 0.8rem;
+    cursor: pointer; transition: all 0.2s;
+    align-self: flex-start;
+  }
+  .btn-back-book:hover { background: rgba(90,58,16,0.08); border-color: rgba(90,58,16,0.7); }
+
+  /* ── PRAVÁ STRÁNKA – seznam kapitol ── */
+  .book-right {
+    flex: 1;
+    background: linear-gradient(160deg, #fdfaf3 0%, #f8f2e4 100%);
+    padding: 2rem 1.4rem;
+    overflow-y: auto;
+    position: relative; z-index: 1;
+    transition: flex 0.55s ease, padding 0.55s ease;
+  }
+  .book-right h3 {
+    font-family: 'Cinzel', serif;
+    color: #2a1200;
+    font-size: clamp(0.58rem, 0.85vw, 0.72rem);
+    letter-spacing: 0.22em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(100,60,0,0.25);
+  }
+  .chapter-list { list-style: none; }
+  .chapter-list li { border-bottom: 1px solid rgba(100,60,0,0.1); }
+  .chapter-list a {
+    display: block;
+    padding: 0.6rem 0.4rem;
+    font-family: 'Cormorant Garamond', serif;
+    color: #2a1200;
+    font-size: clamp(0.82rem, 1.15vw, 0.98rem);
+    text-decoration: none;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+  .chapter-list a:hover {
+    color: #7a1a00; padding-left: 0.9rem;
+    background: rgba(100,60,0,0.05);
+  }
+  .chapter-num {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem; color: #9a6820;
+    letter-spacing: 0.1em; display: block; margin-bottom: 1px;
+  }
+
+  /* ── PDF IFRAME (skrytý do čtecího režimu) ── */
+  .book-pdf {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    border: none;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease 0.3s;
+    z-index: 2;
+    background: #fff;
+  }
+
+  /* ── ČTECÍ REŽIM ── */
+  .book-overlay.reading .open-book {
+    width: 96vw;
+    height: 94vh;
+    border-radius: 3px;
+  }
+  .book-overlay.reading .book-left {
+    width: 5%;
+    min-width: 5%;
+    padding: 1rem 0.3rem;
+    justify-content: flex-end;
+  }
+  .book-overlay.reading .book-left .book-series,
+  .book-overlay.reading .book-left .book-main-title,
+  .book-overlay.reading .book-left .book-description,
+  .book-overlay.reading .book-left .book-flag-large { display: none; }
+  .book-overlay.reading .book-left .btn-back-book { display: flex; }
+  .book-overlay.reading .book-right { flex: 0; padding: 0; overflow: hidden; }
+  .book-overlay.reading .book-right h3,
+  .book-overlay.reading .book-right .chapter-list { display: none; }
+  .book-overlay.reading .book-pdf {
+    opacity: 1; pointer-events: all;
+  }
+
+  /* Zavírací křížek */
+  .book-close {
+    position: absolute;
+    top: 0.5rem; right: 0.6rem;
+    background: none; border: none;
+    color: rgba(90,58,16,0.4);
+    font-size: 1.1rem; cursor: pointer;
+    z-index: 10; transition: color 0.2s;
+    font-family: sans-serif;
+  }
+  .book-close:hover { color: rgba(90,58,16,1); }
+
+  /* Scrollbar */
+  .book-right::-webkit-scrollbar { width: 4px; }
+  .book-right::-webkit-scrollbar-track { background: rgba(100,60,0,0.08); }
+  .book-right::-webkit-scrollbar-thumb { background: rgba(100,60,0,0.25); border-radius: 2px; }
+
 </style>
 </head>
 <body>
@@ -298,6 +487,32 @@ background: black;
 
 </div>
 
+  <!-- OVERLAY OTEVŘENÁ KNIHA -->
+  <div class="book-overlay" id="bookOverlay">
+    <div class="open-book" id="openBook">
+
+      <!-- LEVÁ STRÁNKA – info o knize / v čtecím režimu tenký bok -->
+      <div class="book-left">
+        <div class="book-series" id="bookSeries">SÉRIE</div>
+        <div class="book-main-title" id="bookMainTitle">Název</div>
+        <div class="book-description" id="bookDesc"></div>
+        <div class="book-flag-large" id="bookFlag"></div>
+        <!-- Tlačítko zpět (viditelné jen při čtení) -->
+        <button class="btn-back-book" id="btnBackBook">← Zpět</button>
+      </div>
+
+      <!-- PRAVÁ STRÁNKA – seznam kapitol -->
+      <div class="book-right">
+        <button class="book-close" id="bookClose">✕</button>
+        <h3 id="chaptersLabel">KAPITOLY</h3>
+        <ul class="chapter-list" id="chapterList"></ul>
+        <!-- PDF iframe – zabere celou plochu v čtecím režimu -->
+        <iframe class="book-pdf" id="bookPdf" src="" title="Kapitola"></iframe>
+      </div>
+
+    </div>
+  </div>
+
 <div id="coords">x: 0% | y: 0%</div>
 
 <script>
@@ -310,48 +525,59 @@ background: black;
 ── */
 const BOOKS = [
   {
-    title: { cs: 'DnD \n Saly Mangrave', en: 'DnD \n Saly Mangrave', de: 'DnD \n Saly Mangrave' },
+    title: { cs: 'Saly Mangrave', en: 'Saly Mangrave', de: 'Saly Mangrave' },
+    description: { cs: 'Příběhy černé druidky v mangrovových bažinách.', en: 'Tales of a black druid in the mangrove swamps.', de: 'Geschichten einer schwarzen Druidin.' },
     lang: 'en',
     genre: 'fantasy',
-    cover: 'book2.png', /* nahraď obrázkem obálky */
-    url: "https://docs.google.com/document/d/16NO300-eInBXOZvw-2iVn6XokSwvLQGOraBNEAQgmzs/edit?usp=sharing",                        /* nahraď odkazem na Google Doc */
-    shelf: 'tl'
+    cover: 'book2.png',
+    shelf: 'tl',
+    chapters: [
+      /* file = cesta k PDF souboru, např. 'stories/saly/saly_ch01.pdf' */
+      { title: { cs: 'Prolog – Mangrovový háj', en: 'Prologue – The Mangrove Grove', de: 'Prolog – Der Mangrovenhain' },
+        file: 'stories/saly/saly_ch01.pdf' },
+      /* Přidávej další kapitoly: */
+      /* { title: { cs: 'Kapitola 1 – Název', en: 'Chapter 1 – Title', de: 'Kapitel 1 – Titel' },
+           file: 'stories/saly/saly_ch02.pdf' }, */
+    ]
   },
-
-{
-  title: { cs: 'Druhá povídka', en: 'Second Story', de: 'Zweite Geschichte' },
-  lang: 'cs',
-  genre: 'fantasy',
-  cover: 'book1.png',
-  url: '#',
-  shelf: 'tl'
-},
-
   {
-    title: { cs: 'Válečné povídky', en: 'War stories', de: 'Kriegsgeschichte' },
+    title: { cs: 'Příběhy z války', en: 'War Stories', de: 'Kriegsgeschichten' },
+    description: { 
+    cs: 'Na památku seržanta Briggse a Blackhoofa Witherspina.', 
+    en: 'In a memory of Sergeant Briggs and Blackhoof Witherspine.', 
+    de: 'In Erinnerung an Sergeant Briggs und Blackhoof Witherspine.' },
     lang: 'en',
-    genre: 'fantasy',
-    cover: 'book1.png', /* nahraď obrázkem obálky */
-    url: "https://docs.google.com/document/d/17UCDp2_HpISKmiTM_rwV-toadQjQpOzpEtvYJZGpDjI/edit?usp=sharing",                        /* nahraď odkazem na Google Doc */
-    shelf: 'tr'
+    genre: 'Fantasy',
+    cover: 'book1.png',
+    shelf: 'tr',
+    chapters: [
+      { title: { cs: 'The Pass', en: 'The Pass', de: 'The Pass' },
+           file: 'Thepass.pdf' },
+    ]
   },
-
- {
-    title: { cs: 'Vlevo Dole', en: 'Sample Story', de: 'Beispielgeschichte' },
+  {
+    title: { cs: 'Ukázka', en: 'Sample', de: 'Beispiel' },
+    description: { cs: 'Ukázková kniha.', en: 'Sample book.', de: 'Beispielbuch.' },
     lang: 'cs',
     genre: 'fantasy',
-    cover: 'book3.png', /* nahraď obrázkem obálky */
-    url: '#',                        /* nahraď odkazem na Google Doc */
-    shelf: 'bl'
+    cover: 'book3.png',
+    shelf: 'bl',
+    chapters: [
+      /* { title: { cs: 'Kapitola 1', en: 'Chapter 1', de: 'Kapitel 1' },
+           file: 'stories/sample/sample_ch01.pdf' }, */
+    ]
   },
-
- {
-    title: { cs: 'Vpravo dole', en: 'Sample Story', de: 'Beispielgeschichte' },
+  {
+    title: { cs: 'Ukázka 2', en: 'Sample 2', de: 'Beispiel 2' },
+    description: { cs: 'Ukázková kniha 2.', en: 'Sample book 2.', de: 'Beispielbuch 2.' },
     lang: 'cs',
     genre: 'fantasy',
-    cover: 'book0.png', /* nahraď obrázkem obálky */
-    url: '#',                        /* nahraď odkazem na Google Doc */
-    shelf: 'br'
+    cover: 'book0.png',
+    shelf: 'br',
+    chapters: [
+      /* { title: { cs: 'Kapitola 1', en: 'Chapter 1', de: 'Kapitel 1' },
+           file: 'stories/sample2/sample2_ch01.pdf' }, */
+    ]
   },
 
   /* Sem přidávej další povídky: */
@@ -375,6 +601,70 @@ const SHELVES = {
 
 let lang = 'cs';
 
+/* ── OVERLAY LOGIKA ── */
+const overlay   = document.getElementById('bookOverlay');
+const btnClose  = document.getElementById('bookClose');
+
+function openBookOverlay(book) {
+  // Resetovat čtecí režim
+  overlay.classList.remove('reading');
+  document.getElementById('bookPdf').src = '';
+
+  document.getElementById('bookSeries').textContent    = book.genre.toUpperCase();
+  document.getElementById('bookMainTitle').textContent = book.title[lang] || book.title.cs;
+  document.getElementById('bookDesc').textContent      = (book.description && book.description[lang]) || '';
+  document.getElementById('bookFlag').textContent      = FLAGS[book.lang] || '';
+
+  const label = { cs: 'KAPITOLY', en: 'CHAPTERS', de: 'KAPITEL' };
+  document.getElementById('chaptersLabel').textContent = label[lang] || 'KAPITOLY';
+
+  const list = document.getElementById('chapterList');
+  list.innerHTML = '';
+  (book.chapters || []).forEach((ch, i) => {
+    const li  = document.createElement('li');
+    const a   = document.createElement('a');
+    const num = document.createElement('span');
+    num.className = 'chapter-num';
+    num.textContent = (i + 1).toString().padStart(2, '0');
+    a.appendChild(num);
+    a.appendChild(document.createTextNode(ch.title[lang] || ch.title.cs));
+    // Klik na kapitolu → čtecí režim s PDF
+    a.href = '#';
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      openPdf(ch.file, ch.title[lang] || ch.title.cs);
+    });
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+
+  overlay.classList.add('visible');
+}
+
+function openPdf(file, title) {
+  const iframe = document.getElementById('bookPdf');
+  iframe.src = file; // např. 'stories/saly/saly_ch01.pdf'
+  // Plynulý přechod do čtecího režimu
+  requestAnimationFrame(() => {
+    overlay.classList.add('reading');
+  });
+}
+
+function closeBookOverlay() {
+  overlay.classList.remove('visible');
+  overlay.classList.remove('reading');
+  setTimeout(() => { document.getElementById('bookPdf').src = ''; }, 400);
+}
+
+// Zpět z čtení na seznam kapitol
+document.getElementById('btnBackBook').addEventListener('click', () => {
+  overlay.classList.remove('reading');
+  setTimeout(() => { document.getElementById('bookPdf').src = ''; }, 400);
+});
+
+btnClose.addEventListener('click', closeBookOverlay);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeBookOverlay(); });
+
 function renderBooks() {
   Object.values(SHELVES).forEach(s => s.innerHTML = '');
   BOOKS.forEach(book => {
@@ -383,9 +673,8 @@ function renderBooks() {
 
     const a = document.createElement('a');
     a.className = 'book-item';
-    a.href = book.url;
-    a.target = '_blank';
-    a.rel = 'noopener';
+    a.href = '#';
+    a.addEventListener('click', e => { e.preventDefault(); openBookOverlay(book); });
 
     const img = document.createElement('img');
     img.src = book.cover;
@@ -395,13 +684,8 @@ function renderBooks() {
     label.className = 'book-label';
     label.textContent = (book.title[lang] || book.title.cs) + '\n' + (FLAGS[book.lang] || '');
 
-    const flag = document.createElement('span');
-    
-    flag.textContent = FLAGS[book.lang] || '';
-
     a.appendChild(img);
     a.appendChild(label);
-    a.appendChild(flag);
     shelf.appendChild(a);
   });
 }
