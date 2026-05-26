@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Láďa Jers Nešetřil – Galerie</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#0d0a14;
+  font-family:'Cormorant Garamond',serif;
+}
+
+.scene {
+  position:relative;
+  width:100vw; height:100vh;
+  min-width:600px;
+  overflow:hidden;
+}
+
+/* ── POZADÍ GALERIE ── */
+/* Nahraď src za 'galerie.png' až budeš mít obrázek */
+.gallery-bg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+  user-select:none; pointer-events:none;
+}
+
+/* ── DVEŘE ZPĚT – stříbrná záře, žádný text ── */
+/* Dolaď left/top/width/height pomocí souřadnicového helperu */
+#hotspot-door {
+  position:absolute;
+  left:2%; top:5%;
+  width:12%; height:90%;
+  cursor:pointer;
+  text-decoration:none;
+  z-index:10;
+}
+#hotspot-door::after {
+  content:'';
+  position:absolute; inset:0;
+  background:radial-gradient(ellipse at center,
+    rgba(192,210,255,0.45) 0%,
+    transparent 70%
+  );
+  opacity:0;
+  transition:opacity 0.35s ease;
+}
+#hotspot-door:hover::after { opacity:1; }
+
+/* ── STOJANY ── */
+.easel-wrap {
+  position:absolute;
+  cursor:pointer;
+  transition:transform 0.35s ease, filter 0.35s ease;
+  transform-origin:bottom center;
+  z-index:10;
+}
+
+/* Hover – zvětšení + záře */
+.easel-wrap:hover {
+  transform:scale(1.8) translateY(-10%);
+  z-index:20;
+}
+
+/* Záře per kategorie */
+.easel-wrap.fantasy:hover {
+  filter:drop-shadow(0 0 22px rgba(40,200,80,0.75))
+         drop-shadow(0 0 45px rgba(20,160,60,0.4));
+}
+.easel-wrap.dnd:hover {
+  filter:drop-shadow(0 0 22px rgba(200,30,30,0.75))
+         drop-shadow(0 0 45px rgba(160,20,20,0.4));
+}
+.easel-wrap.experiment:hover {
+  filter:drop-shadow(0 0 22px rgba(220,170,30,0.75))
+         drop-shadow(0 0 45px rgba(180,130,10,0.4));
+}
+
+
+
+@keyframes sparkle {
+  0%,100% { opacity:0.6; transform:scale(1); }
+  50%      { opacity:1;   transform:scale(1.03); }
+}
+
+.easel-wrap img {
+  width:100%; height:100%;
+  object-fit:contain;
+  display:block;
+  pointer-events:none;
+  user-select:none;
+}
+
+/* Název kategorie při hoveru */
+.easel-label {
+  position:absolute;
+  bottom:-2rem; left:50%;
+  transform:translateX(-50%);
+  font-family:'Cinzel',serif;
+  font-size:clamp(0.55rem,0.9vw,0.8rem);
+  letter-spacing:0.18em;
+  white-space:nowrap;
+  padding:0.25rem 0.7rem;
+  border-radius:20px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.3s ease;
+}
+.easel-wrap:hover .easel-label { opacity:1; }
+.easel-wrap.fantasy  .easel-label { color:#40c850; border:1px solid rgba(40,200,80,0.4); background:rgba(0,0,0,0.7); }
+.easel-wrap.dnd      .easel-label { color:#e04040; border:1px solid rgba(200,30,30,0.4);  background:rgba(0,0,0,0.7); }
+.easel-wrap.experiment .easel-label { color:#d4a830; border:1px solid rgba(220,170,30,0.4); background:rgba(0,0,0,0.7); }
+
+/* Pozice stojanů – dolaď dle obrázku galerie */
+#easel-fantasy    { left:18%; top:49%; width:15%; height:50%; }
+#easel-dnd        { left:41%; top:47%; width:15%; height:50%; }
+#easel-experiment { left:64%; top:49%; width:15%; height:50%; }
+
+/* ── KINO OVERLAY ── */
+.kino-overlay {
+  position:fixed; inset:0;
+  z-index:50;
+  background:rgba(0,0,0,0.88);
+  backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.35s ease;
+}
+.kino-overlay.visible {
+  opacity:1; pointer-events:all;
+}
+
+/* Rám galerie – CSS+SVG */
+.kino-frame {
+  position:relative;
+  width:min(900px,85vw);
+  height:min(600px,80vh);
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* Zlatý ornamentální rám – SVG */
+.kino-frame svg.frame-svg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  pointer-events:none;
+}
+
+/* Plátno uvnitř rámu */
+.kino-canvas {
+  position:relative;
+  width:78%; height:78%;
+  z-index:2;
+  display:flex; align-items:center; justify-content:center;
+  background:#1a1008;
+  overflow:hidden;
+}
+.kino-canvas img {
+  max-width:100%; max-height:100%;
+  object-fit:contain;
+  display:block;
+  transition:opacity 0.4s ease;
+}
+.kino-canvas.loading img { opacity:0; }
+
+/* Popis obrázku */
+.kino-caption {
+  position:absolute;
+  bottom:-2.5rem; left:50%;
+  transform:translateX(-50%);
+  font-family:'Cinzel',serif;
+  font-size:clamp(0.55rem,0.9vw,0.78rem);
+  letter-spacing:0.15em;
+  color:rgba(212,168,90,0.8);
+  white-space:nowrap;
+  z-index:3;
+}
+
+/* Počítadlo obrázků */
+.kino-counter {
+  position:absolute;
+  top:-2rem; left:50%;
+  transform:translateX(-50%);
+  font-family:'Cinzel',serif;
+  font-size:0.6rem;
+  letter-spacing:0.2em;
+  color:rgba(212,168,90,0.5);
+  z-index:3;
+}
+
+/* Drahokamy – posun */
+.gem-btn {
+  position:absolute;
+  top:50%; transform:translateY(-50%);
+  width:clamp(36px,4vw,54px);
+  height:clamp(36px,4vw,54px);
+  cursor:pointer;
+  z-index:5;
+  transition:transform 0.2s ease, filter 0.2s ease;
+  background:none; border:none; padding:0;
+}
+.gem-btn:hover {
+  transform:translateY(-50%) scale(1.2);
+  filter:brightness(1.4);
+}
+.gem-btn.left  { left: 2%; }
+.gem-btn.right { right:2%; }
+
+/* Zavírací křížek */
+.kino-close {
+  position:absolute;
+  top:0.8rem; right:0.8rem;
+  background:none; border:none;
+  color:rgba(212,168,90,0.45);
+  font-size:1.3rem; cursor:pointer;
+  z-index:60; transition:color 0.2s;
+  font-family:sans-serif;
+}
+.kino-close:hover { color:rgba(212,168,90,1); }
+
+/* ── SOUŘADNICOVÝ HELPER ── */
+#coords {
+  position:fixed; bottom:1rem; right:1rem;
+  background:rgba(0,0,0,0.7); color:#d4a85a;
+  font-family:monospace; font-size:0.75rem;
+  padding:0.4rem 0.8rem; border-radius:4px;
+  pointer-events:none; z-index:100; letter-spacing:0.1em;
+}
+
+/* ── MOBIL ── */
+.rotate-notice {
+  display:none; position:fixed; inset:0;
+  background:#0d0a14; z-index:999;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; color:#c8b882;
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic; font-size:1.1rem;
+  text-align:center; padding:2rem;
+}
+.rotate-notice .arrow { font-size:3rem; animation:rotA 2s ease-in-out infinite; }
+@keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+@media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+</style>
+</head>
+<body>
+
+<div class="rotate-notice">
+  <div class="arrow">📱</div>
+  <div>Otočte prosím telefon<br>na šířku</div>
+</div>
+
+<div class="scene" id="scene">
+
+  <!-- Pozadí galerie – nahraď src za 'galerie.png' -->
+  <img class="gallery-bg" src="galerie.png" alt="Galerie">
+
+  <!-- Dveře zpět – stříbrná záře, žádný text -->
+  <!-- Dolaď pozici (#hotspot-door v CSS) pomocí souřadnicového helperu -->
+  <a id="hotspot-door" href="fantasy.html"></a>
+
+  <!-- ── STOJANY ── -->
+  <!-- Fantasy stojan – zelená záře -->
+  <div class="easel-wrap fantasy" id="easel-fantasy">
+    <!-- Nahraď src za 'stojan_fantasy.png' -->
+    <img src="stojan_fantasy.png" alt="Fantasy">
+    <span class="easel-label">Fantasy</span>
+  </div>
+
+  <!-- D&D stojan – rudá záře -->
+  <div class="easel-wrap dnd" id="easel-dnd">
+    <!-- Nahraď src za 'stojan_dnd.png' -->
+    <img src="stojan_dnd.png" alt="D&D">
+    <span class="easel-label">D&amp;D</span>
+  </div>
+
+  <!-- Experimentální stojan – zlatá záře -->
+  <div class="easel-wrap experiment" id="easel-experiment">
+    <!-- Nahraď src za 'stojan_experiment.png' -->
+    <img src="stojan_experiment.png" alt="Experiment">
+    <span class="easel-label">Experiment</span>
+  </div>
+
+</div><!-- /scene -->
+
+<!-- ── KINO OVERLAY ── -->
+<div class="kino-overlay" id="kinoOverlay">
+  <button class="kino-close" id="kinoClose">✕</button>
+
+  <div class="kino-frame">
+
+    <!-- Ornamentální rám – SVG -->
+    <svg class="frame-svg" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#f0d060"/>
+          <stop offset="30%"  stop-color="#c89030"/>
+          <stop offset="60%"  stop-color="#f0d060"/>
+          <stop offset="100%" stop-color="#8b5a10"/>
+        </linearGradient>
+      </defs>
+      <!-- Vnější rám -->
+      <rect x="5" y="5" width="890" height="590" rx="8"
+            fill="none" stroke="url(#goldGrad)" stroke-width="10"/>
+      <!-- Vnitřní linka -->
+      <rect x="25" y="25" width="850" height="550" rx="4"
+            fill="none" stroke="url(#goldGrad)" stroke-width="3"/>
+      <!-- Rohové ozdoby -->
+      <circle cx="25"  cy="25"  r="12" fill="url(#goldGrad)"/>
+      <circle cx="875" cy="25"  r="12" fill="url(#goldGrad)"/>
+      <circle cx="25"  cy="575" r="12" fill="url(#goldGrad)"/>
+      <circle cx="875" cy="575" r="12" fill="url(#goldGrad)"/>
+      <!-- Střední ozdoby na stranách -->
+      <circle cx="450" cy="12"  r="8" fill="url(#goldGrad)"/>
+      <circle cx="450" cy="588" r="8" fill="url(#goldGrad)"/>
+      <circle cx="12"  cy="300" r="8" fill="url(#goldGrad)"/>
+      <circle cx="888" cy="300" r="8" fill="url(#goldGrad)"/>
+      <!-- Rohové filigránové linky -->
+      <path d="M25,50 Q25,25 50,25" fill="none" stroke="url(#goldGrad)" stroke-width="2"/>
+      <path d="M850,25 Q875,25 875,50" fill="none" stroke="url(#goldGrad)" stroke-width="2"/>
+      <path d="M25,550 Q25,575 50,575" fill="none" stroke="url(#goldGrad)" stroke-width="2"/>
+      <path d="M850,575 Q875,575 875,550" fill="none" stroke="url(#goldGrad)" stroke-width="2"/>
+    </svg>
+
+    <!-- Plátno s obrázkem -->
+    <div class="kino-canvas" id="kinoCanvas">
+      <img id="kinoImg" src="" alt="">
+    </div>
+
+    <!-- Počítadlo -->
+    <div class="kino-counter" id="kinoCounter"></div>
+
+    <!-- Popis -->
+    <div class="kino-caption" id="kinoCaption"></div>
+
+    <!-- Drahokam vlevo -->
+    <button class="gem-btn left" id="gemLeft" title="Předchozí">
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gemL" cx="35%" cy="30%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+            <stop offset="40%" stop-color="var(--gem-color, #40a840)"/>
+            <stop offset="100%" stop-color="var(--gem-dark, #1a5a1a)"/>
+          </radialGradient>
+        </defs>
+        <polygon points="30,5 55,20 55,40 30,55 5,40 5,20"
+                 fill="url(#gemL)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <polygon points="30,5 55,20 30,30" fill="rgba(255,255,255,0.15)"/>
+        <text x="30" y="38" text-anchor="middle"
+              font-size="20" fill="rgba(255,255,255,0.8)">‹</text>
+      </svg>
+    </button>
+
+    <!-- Drahokam vpravo -->
+    <button class="gem-btn right" id="gemRight" title="Další">
+      <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gemR" cx="35%" cy="30%">
+            <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+            <stop offset="40%" stop-color="var(--gem-color, #40a840)"/>
+            <stop offset="100%" stop-color="var(--gem-dark, #1a5a1a)"/>
+          </radialGradient>
+        </defs>
+        <polygon points="30,5 55,20 55,40 30,55 5,40 5,20"
+                 fill="url(#gemR)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+        <polygon points="30,5 55,20 30,30" fill="rgba(255,255,255,0.15)"/>
+        <text x="30" y="38" text-anchor="middle"
+              font-size="20" fill="rgba(255,255,255,0.8)">›</text>
+      </svg>
+    </button>
+
+  </div><!-- /kino-frame -->
+</div><!-- /kino-overlay -->
+
+<div id="coords">x: 0% | y: 0%</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA – přidávej obrázky sem
+   Každý obrázek má:
+     src     – cesta k souboru (img/nazev.jpg)
+     caption – popis zobrazený pod obrázkem
+   ══════════════════════════════════════════════════════ */
+const GALLERY = {
+
+  fantasy: {
+    label: 'Fantasy',
+    gemColor: '#40c850',
+    gemDark:  '#1a5a1a',
+    images: [
+      /* Přidávej obrázky takto: */
+      /* { src: 'img/fantasy_01.jpg', caption: 'Název obrázku' }, */
+      { src: 'img/placeholder.jpg', caption: 'Fantasy – ukázka' },
+    ]
+  },
+
+  dnd: {
+    label: 'D&D',
+    gemColor: '#e04040',
+    gemDark:  '#8b1010',
+    images: [
+      /* Blackhoof and Briggs */
+      { src: 'gallery/dnd/briggsNblacky.png', caption: 'Briggs and Blackhoof' },
+      { src: 'gallery/dnd/healing.png', caption: 'The Healing' },
+      { src: 'gallery/dnd/emptychest.png', caption: 'The Empty Chest' },
+      { src: 'gallery/dnd/captive.png', caption: 'The Captive' },
+      { src: 'gallery/dnd/warprice.png', caption: 'The Price of War' },
+      { src: 'gallery/dnd/stranger.png', caption: 'The Stranger' },
+      { src: 'gallery/dnd/greenone.png', caption: 'The Green One' },
+      { src: 'gallery/dnd/runecoming.png', caption: 'The Runecoming' },
+
+
+      /* Salamander Mangrave */      
+      { src: 'gallery/experiment/saly1.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/dnd/dragontalk.png', caption: 'Leasion and Saly in discussion' },
+    ]
+  },
+
+  experiment: {
+    label: 'Experiment',
+    gemColor: '#d4a830',
+    gemDark:  '#8b6010',
+    images: [
+      /* { src: 'img/exp_01.jpg', caption: 'Název obrázku' }, */
+      { src: 'gallery/experiment/medit_fox.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/green_fox.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/green_castle_2023.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/green_castle_2025.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/wolf_stripes.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/wolf_stripes2.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/asian_dragon.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/red_wolf.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/iceplanes_wallpaper.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/sleeping_pony.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/sleeping_fox.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/Flammir.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/Flammir1.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/Flammir2.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/angel.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/night_stories.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/girlNfox.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/ink_paint.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/japanese_street.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/Karel.jpg', caption: 'Experiment – ukázka' },
+      { src: 'gallery/experiment/medusas.jpg', caption: 'Experiment – ukázka' },
+
+
+
+    ]
+  },
+
+};
+
+/* ── KINO LOGIKA ── */
+const overlay   = document.getElementById('kinoOverlay');
+const kinoImg   = document.getElementById('kinoImg');
+const kinoCaption = document.getElementById('kinoCaption');
+const kinoCounter = document.getElementById('kinoCounter');
+const gemLeft   = document.getElementById('gemLeft');
+const gemRight  = document.getElementById('gemRight');
+const kinoClose = document.getElementById('kinoClose');
+
+let currentCategory = null;
+let currentIndex    = 0;
+
+function setGemColor(color, dark) {
+  /* Nastaví barvu drahokamů podle kategorie */
+  document.querySelectorAll('.gem-btn svg').forEach(svg => {
+    svg.style.setProperty('--gem-color', color);
+    svg.style.setProperty('--gem-dark',  dark);
+  });
+  /* Přebarvení stop elementů přes atributy */
+  ['gemL','gemR'].forEach(id => {
+    const grad = document.getElementById(id);
+    if (!grad) return;
+    grad.children[1].setAttribute('stop-color', color);
+    grad.children[2].setAttribute('stop-color', dark);
+  });
+}
+
+function showImage(index) {
+  const cat    = GALLERY[currentCategory];
+  const images = cat.images;
+  if (!images.length) return;
+  currentIndex = (index + images.length) % images.length;
+  const item   = images[currentIndex];
+
+  const canvas = document.getElementById('kinoCanvas');
+  canvas.classList.add('loading');
+  const tmp = new Image();
+  tmp.onload = () => {
+    kinoImg.src = item.src;
+    canvas.classList.remove('loading');
+  };
+  tmp.onerror = () => {
+    kinoImg.src = '';
+    canvas.classList.remove('loading');
+  };
+  tmp.src = item.src;
+
+  kinoCaption.textContent = item.caption || '';
+  kinoCounter.textContent = (currentIndex + 1) + ' / ' + images.length;
+}
+
+function openKino(categoryKey) {
+  currentCategory = categoryKey;
+  currentIndex    = 0;
+  const cat = GALLERY[categoryKey];
+  setGemColor(cat.gemColor, cat.gemDark);
+  showImage(0);
+  overlay.classList.add('visible');
+}
+
+function closeKino() {
+  overlay.classList.remove('visible');
+  currentCategory = null;
+}
+
+/* Kliknutí na stojany */
+document.getElementById('easel-fantasy').addEventListener('click',
+  () => openKino('fantasy'));
+document.getElementById('easel-dnd').addEventListener('click',
+  () => openKino('dnd'));
+document.getElementById('easel-experiment').addEventListener('click',
+  () => openKino('experiment'));
+
+/* Drahokamy */
+gemLeft.addEventListener('click',  () => showImage(currentIndex - 1));
+gemRight.addEventListener('click', () => showImage(currentIndex + 1));
+
+/* Zavření */
+kinoClose.addEventListener('click', closeKino);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeKino(); });
+
+/* Klávesnice */
+document.addEventListener('keydown', e => {
+  if (!overlay.classList.contains('visible')) return;
+  if (e.key === 'ArrowLeft')  showImage(currentIndex - 1);
+  if (e.key === 'ArrowRight') showImage(currentIndex + 1);
+  if (e.key === 'Escape')     closeKino();
+});
+
+/* ── SOUŘADNICOVÝ HELPER ── */
+const scene  = document.getElementById('scene');
+const coords = document.getElementById('coords');
+scene.addEventListener('mousemove', e => {
+  const r = scene.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width  * 100).toFixed(1);
+  const y = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
+  coords.textContent = `x: ${x}% | y: ${y}%`;
+});
+</script>
+
+</body>
+</html>
