@@ -49,12 +49,41 @@ background: black;
   left: 16%; top: 20%;
   width: 63%; height: 68%;
   z-index: 5;
- /*  background: url('wood_back.jpg') repeat;
+  background: url('wood_back.jpg') repeat;
   background-size: 100px auto;   
-  border-radius: 2px; SCHOVANE POZADI */
+  border-radius: 2px; SCHOVANE POZADI /* */
 }
 
   /* ── ZPĚT ── */
+  /* ── LAMPY – klikatelné zóny ── */
+  .lamp-hotspot {
+    position: absolute;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 50%;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+  }
+  .lamp-hotspot::after {
+    content: '';
+    position: absolute;
+    inset: -120%;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .lamp-hotspot:hover::after { opacity: 1; }
+
+  /* Levá lampa – zlatá záře */
+  #lamp-left::after {
+    background: radial-gradient(circle, rgba(255,200,50,0.55) 0%, transparent 70%);
+  }
+  /* Pravá lampa – bílá záře */
+  #lamp-right::after {
+    background: radial-gradient(circle, rgba(240,240,255,0.55) 0%, transparent 70%);
+  }
+
   .back-btn {
     position: absolute;
     top: 1.2rem; left: 1.2rem;
@@ -460,8 +489,15 @@ background: black;
 <div class="shelf-back"></div>
 
 
-  <!-- Zpět -->
-  <a class="back-btn" href="fantasy.html">←</a>
+  <!-- Levá lampa – zpět na fantasy.html -->
+  <a class="lamp-hotspot" id="lamp-left" href="fantasy.html"
+     style="left:5%; top:49%; width:6vw; height:10vh;">
+  </a>
+
+  <!-- Pravá lampa – galerie -->
+  <a class="lamp-hotspot" id="lamp-right" href="gallery.html"
+     style="left:90%; top:49%; width:6vw; height:10vh;">
+  </a>
 
   <!-- Jazyky -->
   <div class="lang-btns">
@@ -558,35 +594,36 @@ const BOOKS = [
     chapters: [
 
   { title: { cs: 'Zelenáč', en: 'The Green One', de: 'Der Neuling' },
-    file: 'stories_bab/green.pdf' },
+    file: 'stories_BaB/green.pdf' },
   { title: { cs: 'Bez slávy', en: 'No Glory', de: 'Kein Ruhm' },
-    file: 'stories_bab/noglory.pdf' },
+    file: 'stories_BaB/noglory.pdf' },
   { title: { cs: 'Po krk v hovnech, Seržo', en: 'Neck-Deep In The Shit, Sergeant', de: 'Zum Hals in der Scheise, Sergeant' },
-    file: 'stories_bab/neck-deep.pdf' },
+    file: 'stories_BaB/neck-deep.pdf' },
   { title: { cs: 'Dovolená', en: 'The Pass', de: 'Die Urlaub' },
-    file: 'stories_bab/thepass.pdf' },
+    file: 'stories_BaB/thepass.pdf' },
   { title: { cs: 'Skladová položka', en: 'The War stock', de: 'Die Kriegsaktie' },
-    file: 'stories_bab/warstock.pdf' },
+    file: 'stories_BaB/warstock.pdf' },
   { title: { cs: 'Zajatec', en: 'The Captive', de: 'Der Gefangener' },
-    file: 'stories_bab/captive.pdf' },
+    file: 'stories_BaB/captive.pdf' },
   { title: { cs: 'Dodávka', en: 'The Delivery', de: 'Die Lieferung' },
-    file: 'stories_bab/delivery.pdf' },
+    file: 'stories_BaB/delivery.pdf' },
   { title: { cs: 'Zmrzlá hovna a staré zášti', en: 'Frozen Shit and Old Grudges', de: 'Gefrorener Scheiß und alter Groll' },
-    file: 'stories_bab/frozen_shit.pdf' },
+    file: 'stories_BaB/frozen_shit.pdf' },
+
   { title: { cs: 'Cizinec', en: 'The Stranger', de: 'Der Auslender' },
-    file: 'stories_bab/stranger.pdf' },
+    file: 'stories_BaB/stranger.pdf' },
   { title: { cs: 'Konec zášti', en: 'The end of the grudge', de: 'Das Ende des Grolls' },
-    file: 'stories_bab/grudge.pdf' },
+    file: 'stories_BaB/grudge.pdf' },
  { title: { cs: 'Zraněný', en: 'The Healing', de: 'Die Hailung' },
-    file: 'stories_bab/healing.pdf' },
+    file: 'stories_BaB/healing.pdf' },
  { title: { cs: 'Mapa', en: 'The Map', de: 'Die Schatzkarte' },
-    file: 'stories_bab/map.pdf' },
+    file: 'stories_BaB/map.pdf' },
   { title: { cs: 'Prázdná truhla', en: 'The Empty Chest', de: 'Die Leere Schatztruhe' },
-    file: 'stories_bab/emptychest.pdf' },
+    file: 'stories_BaB/emptychest.pdf' },
   { title: { cs: 'Cena války', en: 'The Price of war', de: 'Der Preis des Krieges' },
-    file: 'stories_bab/warprice.pdf' },
+    file: 'stories_BaB/warprice.pdf' },
   { title: { cs: 'Runy přichází', en: 'The Runecoming', de: 'Die Gerüchte kommen' },
-    file: 'stories_bab/runecoming.pdf' },
+    file: 'stories_BaB/runecoming.pdf' },
     ]
   },
   {
