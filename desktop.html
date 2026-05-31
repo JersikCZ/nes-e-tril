@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vladimír Nešetřil – Případové studie</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:        #0f1117;
+  --taskbar:   #1a1d27;
+  --window-bg: #151820;
+  --glass:     rgba(255,255,255,0.04);
+  --border:    rgba(255,255,255,0.08);
+  --accent:    #4a9eff;
+  --accent2:   #a78bfa;
+  --dt:        #c8cdd8;
+  --dt-dim:    #5a6070;
+  --green:     #34d399;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  font-family:'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--dt);
+}
+
+.monitor {
+  width:100vw; height:100vh;
+  background:#0a0c12;
+  display:flex; flex-direction:column;
+  overflow:hidden; position:relative;
+}
+.monitor::before {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(135deg,
+    rgba(255,255,255,0.025) 0%, transparent 50%, rgba(0,0,0,0.08) 100%);
+  pointer-events:none; z-index:1;
+}
+
+/* ── TASKBAR ── */
+.taskbar {
+  height:36px;
+  background:var(--taskbar);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center;
+  padding:0 12px; gap:8px;
+  flex-shrink:0; position:relative; z-index:5;
+}
+.tb-dots { display:flex; gap:5px; }
+.tb-dot {
+  width:10px; height:10px; border-radius:50%;
+  cursor:pointer; transition:filter 0.2s;
+}
+.tb-dot.close  { background:#f87171; }
+.tb-dot.min    { background:#fbbf24; }
+.tb-dot.max    { background:#34d399; }
+.tb-dot:hover  { filter:brightness(1.3); }
+
+.tb-title {
+  position:absolute; left:50%; transform:translateX(-50%);
+  font-size:0.68rem; color:var(--dt-dim);
+  font-family:'IBM Plex Mono', monospace; letter-spacing:0.08em;
+}
+
+/* Přepínač jazyků v taskbaru */
+.lang-btns {
+  margin-left:auto;
+  display:flex; gap:4px; align-items:center;
+}
+.lang-btn {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.58rem; letter-spacing:0.1em;
+  border:1px solid rgba(255,255,255,0.12);
+  background:transparent; color:var(--dt-dim);
+  border-radius:4px; padding:2px 8px;
+  cursor:pointer; transition:all 0.2s;
+}
+.lang-btn.active, .lang-btn:hover {
+  background:rgba(74,158,255,0.2);
+  border-color:rgba(74,158,255,0.5);
+  color:var(--accent);
+}
+
+.tb-clock {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:0.65rem; color:var(--dt-dim);
+  letter-spacing:0.05em; margin-left:10px;
+}
+
+/* ── DESKTOP ── */
+.desktop {
+  flex:1; position:relative; overflow:hidden;
+  background:
+    linear-gradient(rgba(74,158,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,158,255,0.03) 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 50%, rgba(74,158,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(167,139,250,0.06) 0%, transparent 60%),
+    #0f1117;
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+}
+
+/* ── SLOŽKY ── */
+.folder-item {
+  position:absolute;
+  width:88px;
+  display:flex; flex-direction:column; align-items:center;
+  gap:6px; cursor:pointer;
+  padding:8px 6px; border-radius:8px;
+  border:1px solid transparent;
+  transition:all 0.2s ease;
+  user-select:none; z-index:2;
+}
+.folder-item:hover {
+  background:rgba(74,158,255,0.08);
+  border-color:rgba(74,158,255,0.2);
+}
+.folder-item.selected {
+  background:rgba(74,158,255,0.15);
+  border-color:rgba(74,158,255,0.35);
+}
+.folder-icon { width:48px; height:40px; }
+.folder-icon svg { width:100%; height:100%; }
+.folder-name {
+  font-size:0.65rem; color:var(--dt);
+  text-align:center; line-height:1.3;
+  text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  max-width:80px; word-break:break-word;
+  white-space:pre-line;
+}
+
+/* ── OKNO STUDIE ── */
+.study-window {
+  position:absolute;
+  top:20px; left:110px;
+  width:calc(100% - 130px);
+  height:calc(100% - 40px);
+  background:var(--window-bg);
+  border-radius:8px;
+  border:1px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  display:flex; flex-direction:column;
+  opacity:0; pointer-events:none;
+  transform:scale(0.97) translateY(8px);
+  transition:opacity 0.25s ease, transform 0.25s ease;
+  z-index:10; overflow:hidden;
+}
+.study-window.visible {
+  opacity:1; pointer-events:all;
+  transform:scale(1) translateY(0);
+}
+.win-header {
+  height:34px;
+  background:rgba(255,255,255,0.03);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center;
+  padding:0 12px; gap:6px; flex-shrink:0;
+}
+.win-dots { display:flex; gap:5px; }
+.win-dot {
+  width:9px; height:9px; border-radius:50%;
+  cursor:pointer; transition:filter 0.2s;
+}
+.win-dot.close  { background:#f87171; }
+.win-dot.min    { background:#fbbf24; }
+.win-dot.max    { background:#34d399; }
+.win-dot:hover  { filter:brightness(1.3); }
+.win-title {
+  flex:1; text-align:center;
+  font-size:0.68rem; color:var(--dt-dim);
+  font-family:'IBM Plex Mono', monospace; letter-spacing:0.06em;
+}
+.win-body {
+  flex:1; overflow-y:auto;
+  padding:2rem 2.5rem;
+  display:grid;
+  grid-template-columns:1fr 300px;
+  gap:2rem;
+}
+.win-left h1 {
+  font-size:clamp(1rem,1.8vw,1.3rem);
+  font-weight:600; color:#fff; margin-bottom:0.4rem;
+}
+.win-subtitle {
+  font-size:0.68rem; color:var(--accent);
+  font-family:'IBM Plex Mono', monospace;
+  letter-spacing:0.1em; margin-bottom:1.5rem;
+}
+.win-section { margin-bottom:1.4rem; }
+.win-section h3 {
+  font-size:0.62rem; color:var(--dt-dim);
+  letter-spacing:0.15em; text-transform:uppercase;
+  margin-bottom:0.5rem;
+  font-family:'IBM Plex Mono', monospace;
+}
+.win-section p { font-size:0.82rem; line-height:1.75; color:var(--dt); }
+.win-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:0.5rem; }
+.win-tag {
+  font-size:0.6rem;
+  font-family:'IBM Plex Mono', monospace;
+  padding:2px 8px; border-radius:4px;
+  border:1px solid rgba(74,158,255,0.3);
+  color:var(--accent); background:rgba(74,158,255,0.06);
+}
+.win-right { display:flex; flex-direction:column; gap:1rem; }
+.metric-card {
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:8px; padding:1rem 1.2rem;
+}
+.m-label {
+  font-size:0.6rem; color:var(--dt-dim);
+  font-family:'IBM Plex Mono', monospace;
+  letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.3rem;
+}
+.m-value {
+  font-size:1.4rem; font-weight:600; color:#fff;
+  line-height:1; margin-bottom:0.2rem;
+}
+.m-value.green  { color:var(--green); }
+.m-value.blue   { color:var(--accent); }
+.m-value.purple { color:var(--accent2); }
+.m-desc { font-size:0.68rem; color:var(--dt-dim); line-height:1.4; }
+
+.win-body::-webkit-scrollbar { width:4px; }
+.win-body::-webkit-scrollbar-track { background:transparent; }
+.win-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+
+.pdf-btn {
+  display:inline-block; margin-top:1rem;
+  font-size:0.62rem;
+  font-family:'IBM Plex Mono', monospace;
+  padding:4px 12px; border-radius:4px;
+  border:1px solid rgba(74,158,255,0.4);
+  color:var(--accent); background:rgba(74,158,255,0.08);
+  text-decoration:none; cursor:pointer;
+  transition:all 0.2s;
+}
+.pdf-btn:hover { background:rgba(74,158,255,0.18); }
+</style>
+</head>
+<body>
+
+<div class="monitor">
+
+  <div class="taskbar">
+    <div class="tb-dots">
+      <div class="tb-dot close" id="btnBack"></div>
+      <div class="tb-dot min"></div>
+      <div class="tb-dot max"></div>
+    </div>
+    <div class="tb-title" id="tbTitle">VN_Portfolio</div>
+    <div class="lang-btns">
+      <button class="lang-btn active" onclick="setLang('cs')">CZ</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('de')">DE</button>
+    </div>
+    <div class="tb-clock" id="tbClock">00:00</div>
+  </div>
+
+  <div class="desktop" id="desktop">
+    <div class="study-window" id="studyWindow">
+      <div class="win-header">
+        <div class="win-dots">
+          <div class="win-dot close" id="btnCloseStudy"></div>
+          <div class="win-dot min"></div>
+          <div class="win-dot max"></div>
+        </div>
+        <div class="win-title" id="winTitle">studie.md</div>
+      </div>
+      <div class="win-body" id="winBody"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DATA – případové studie
+   Přidej novou studii = zkopíruj blok { ... } a vyplň.
+   Barvy: 'yellow' / 'blue' / 'green' / 'red' / 'purple'
+══════════════════════════════════════════════════════════════ */
+const STUDIES = [
+
+  {
+    id:    'belimo',
+    color: 'yellow',
+    pdf:   '#', /* doplň: 'studies/belimo.pdf' */
+    folder: {
+      cs: 'Belimo\nReklamace',
+      en: 'Belimo\nComplaint',
+      de: 'Belimo\nReklamation',
+    },
+    title: {
+      cs: 'Belimo – Zákaznická reklamace',
+      en: 'Belimo – Customer Complaint Resolution',
+      de: 'Belimo – Kundenreklamation',
+    },
+    subtitle: {
+      cs: 'ZÁKAZNICKÁ KVALITA / ŘEŠENÍ REKLAMACÍ',
+      en: 'CUSTOMER QUALITY / COMPLAINT RESOLUTION',
+      de: 'KUNDENQUALITÄT / REKLAMATIONSBEARBEITUNG',
+    },
+    problem: {
+      cs: 'Opakující se zákaznické reklamace od Belimo týkající se rozměrové neshody na krimpovaných konektorech. Zákazník požadoval okamžitou nápravnou akci a preventivní opatření v rámci 8D metodiky.',
+      en: 'Recurring customer complaints from Belimo regarding dimensional non-conformities on crimped connectors. The customer demanded immediate corrective action and preventive measures within the 8D methodology framework.',
+      de: 'Wiederkehrende Kundenreklamationen von Belimo bezüglich Maßabweichungen an gecrimpteten Steckverbindern. Der Kunde forderte sofortige Korrekturmaßnahmen und Präventivmaßnahmen im Rahmen der 8D-Methodik.',
+    },
+    solution: {
+      cs: 'Analýza kořenové příčiny pomocí Ishikawa diagramu a 5x Proč. Zavedení 100% vizuální kontroly na výstupu, revize pracovní instrukce, přeškolení operátorů. Implementace nového měřicího postupu pro krimpovací sílu.',
+      en: 'Root cause analysis using Ishikawa diagram and 5 Whys. Implementation of 100% visual inspection at output, revision of work instructions, retraining of operators. Introduction of a new measurement procedure for crimping force.',
+      de: 'Ursachenanalyse mittels Ishikawa-Diagramm und 5-Warum-Methode. Einführung einer 100%-Sichtprüfung am Ausgang, Überarbeitung der Arbeitsanweisung, Nachschulung der Bediener. Implementierung eines neuen Messverfahrens für die Crimpkraft.',
+    },
+    result: {
+      cs: 'Nulová opakovaná reklamace v následujících 12 měsících. Zákazník uzavřel 8D report s hodnocením "satisfactory". Snížení interního zmetkovitosti o 60 %.',
+      en: 'Zero repeat complaints in the following 12 months. Customer closed the 8D report with a "satisfactory" rating. Internal scrap rate reduced by 60%.',
+      de: 'Keine Wiederholungsreklamation in den folgenden 12 Monaten. Der Kunde schloss den 8D-Bericht mit der Bewertung „satisfactory" ab. Interne Ausschussrate um 60 % gesenkt.',
+    },
+    tags: ['8D', 'Ishikawa', 'Crimping', 'PPAP', 'Belimo'],
+    metrics: [
+      {
+        label: { cs: 'Opakované reklamace',   en: 'Repeat complaints',      de: 'Wiederholungsreklamationen' },
+        value: '0',
+        unit:  { cs: 'za 12 měsíců',          en: 'in 12 months',           de: 'in 12 Monaten' },
+        color: 'green',
+      },
+      {
+        label: { cs: 'Snížení zmetkovitosti', en: 'Scrap rate reduction',   de: 'Ausschussreduktion' },
+        value: '↓60%',
+        unit:  { cs: '',                       en: '',                        de: '' },
+        color: 'blue',
+      },
+      {
+        label: { cs: '8D hodnocení',           en: '8D assessment',          de: '8D-Bewertung' },
+        value: '✓',
+        unit:  { cs: 'Satisfactory',           en: 'Satisfactory',           de: 'Satisfactory' },
+        color: 'green',
+      },
+    ],
+  },
+
+  {
+    id:    'engeser',
+    color: 'blue',
+    pdf:   '#', /* doplň: 'studies/engeser.pdf' */
+    folder: {
+      cs: 'Engeser USA\nQA Setup',
+      en: 'Engeser USA\nQA Setup',
+      de: 'Engeser USA\nQA Aufbau',
+    },
+    title: {
+      cs: 'Engeser USA – Budování QA od nuly',
+      en: 'Engeser USA – Building QA from Scratch',
+      de: 'Engeser USA – QA-Aufbau von Grund auf',
+    },
+    subtitle: {
+      cs: 'ŘÍZENÍ KVALITY / GREENFIELD SETUP',
+      en: 'QUALITY MANAGEMENT / GREENFIELD SETUP',
+      de: 'QUALITÄTSMANAGEMENT / GREENFIELD-AUFBAU',
+    },
+    problem: {
+      cs: 'Nová výrobní pobočka v Summerville, SC bez zavedených QA procesů, bez systému vstupní kontroly, bez dokumentace. Nutnost rychlého nastavení funkčního QA systému při zachování plynulého spuštění výroby.',
+      en: 'New manufacturing site in Summerville, SC with no established QA processes, no incoming inspection system, and no documentation. Rapid implementation of a functional QA system was required while maintaining smooth production start-up.',
+      de: 'Neuer Fertigungsstandort in Summerville, SC ohne etablierte QA-Prozesse, ohne Wareneingangskontrolle und ohne Dokumentation. Schnelle Einführung eines funktionsfähigen QA-Systems bei gleichzeitig reibungslosem Produktionsanlauf erforderlich.',
+    },
+    solution: {
+      cs: 'Zavedení vstupních požadavků pro příjem materiálu, vytvoření Control Plánů pro klíčové procesy, nastavení shopfloor inspekčního workflow. Vývoj interního digitálního nástroje pro sledování defektů (offline HTML aplikace pro tablet).',
+      en: 'Establishment of incoming material requirements, creation of Control Plans for key processes, setup of shopfloor inspection workflow. Development of an internal digital defect tracking tool (offline HTML tablet application).',
+      de: 'Einführung von Warenanforderungen für den Materialeingang, Erstellung von Kontrollplänen für Schlüsselprozesse, Einrichtung des Shopfloor-Inspektionsworkflows. Entwicklung eines internen digitalen Defekt-Tracking-Tools (Offline-HTML-Tablet-Anwendung).',
+    },
+    result: {
+      cs: 'Funkční QA systém od prvního dne výroby. Certifikační audit bez nálezů kritické kategorie. Shopfloor aplikace nasazena a aktivně používána operátory.',
+      en: 'Fully functional QA system from the first day of production. Certification audit completed with no critical findings. Shopfloor application deployed and actively used by operators.',
+      de: 'Vollständig funktionsfähiges QA-System ab dem ersten Produktionstag. Zertifizierungsaudit ohne kritische Befunde abgeschlossen. Shopfloor-Anwendung implementiert und aktiv von Bedienern genutzt.',
+    },
+    tags: ['Control Plan', 'MSA', 'Gage R&R', 'Audit', 'Incoming Inspection'],
+    metrics: [
+      {
+        label: { cs: 'Kritické nálezy auditu', en: 'Critical audit findings', de: 'Kritische Auditbefunde' },
+        value: '0',
+        unit:  { cs: 'při certifikaci',        en: 'at certification',        de: 'bei Zertifizierung' },
+        color: 'green',
+      },
+      {
+        label: { cs: 'QA procesy',             en: 'QA processes',            de: 'QA-Prozesse' },
+        value: '100%',
+        unit:  { cs: 'pokryto',                en: 'covered',                 de: 'abgedeckt' },
+        color: 'blue',
+      },
+      {
+        label: { cs: 'Shopfloor nástroj',      en: 'Shopfloor tool',          de: 'Shopfloor-Tool' },
+        value: '✓',
+        unit:  { cs: 'v provozu',              en: 'in operation',             de: 'in Betrieb' },
+        color: 'purple',
+      },
+    ],
+  },
+
+  /* Přidávej další studie sem: */
+  {
+    id:    'nova_studie',
+    color: 'green',
+    pdf:   'studies/nova_studie.pdf',
+    folder:  { cs: 'Název\nSložky', en: 'Folder\nName', de: 'Ordner\nName' },
+    title:   { cs: '...', en: '...', de: '...' },
+    subtitle:{ cs: '...', en: '...', de: '...' },
+    problem: { cs: '...', en: '...', de: '...' },
+    solution:{ cs: '...', en: '...', de: '...' },
+    result:  { cs: '...', en: '...', de: '...' },
+    tags: ['Tag1', 'Tag2'],
+    metrics: [
+      { label: { cs: '...', en: '...', de: '...' },
+        value: '42',
+        unit:  { cs: '...', en: '...', de: '...' },
+        color: 'green' },
+    ],
+  },
+  
+  {
+    id:    'nova_studie_2',
+    color: 'purple',
+    pdf:   'studies/nova_studie.pdf',
+    folder:  { cs: 'Název\nSložky', en: 'Folder\nName', de: 'Ordner\nName' },
+    title:   { cs: '...', en: '...', de: '...' },
+    subtitle:{ cs: '...', en: '...', de: '...' },
+    problem: { cs: '...', en: '...', de: '...' },
+    solution:{ cs: '...', en: '...', de: '...' },
+    result:  { cs: '...', en: '...', de: '...' },
+    tags: ['Tag1', 'Tag2'],
+    metrics: [
+      { label: { cs: '...', en: '...', de: '...' },
+        value: '42',
+        unit:  { cs: '...', en: '...', de: '...' },
+        color: 'green' },
+    ],
+  },
+
+
+];
+
+/* ══════════════════════════════════════════════════════════════
+   JAZYK
+══════════════════════════════════════════════════════════════ */
+let lang = 'cs';
+
+const TB_TITLES = {
+  cs: 'VN_Portfolio — případové studie',
+  en: 'VN_Portfolio — case studies',
+  de: 'VN_Portfolio — Fallstudien',
+};
+const SEC_LABELS = {
+  problem:  { cs: 'Problém',              en: 'Problem',             de: 'Problem'          },
+  solution: { cs: 'Řešení',              en: 'Solution',            de: 'Lösung'           },
+  result:   { cs: 'Výsledek',            en: 'Result',              de: 'Ergebnis'         },
+  tools:    { cs: 'Nástroje & metody',   en: 'Tools & methods',     de: 'Werkzeuge & Methoden' },
+  pdf:      { cs: '📄 Otevřít PDF',      en: '📄 Open PDF',         de: '📄 PDF öffnen'   },
+};
+
+function t(obj) {
+  if (typeof obj === 'string') return obj;
+  return obj[lang] || obj.cs || '';
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent === l.toUpperCase())
+  );
+  document.getElementById('tbTitle').textContent = TB_TITLES[l];
+  /* Překreslit složky */
+  renderFolders();
+  /* Pokud je okno otevřené, překreslit obsah */
+  const win = document.getElementById('studyWindow');
+  if (win.classList.contains('visible') && currentStudyId) {
+    openStudy(currentStudyId);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BARVY SLOŽEK
+══════════════════════════════════════════════════════════════ */
+const FOLDER_COLORS = {
+  yellow: { bg: '#f0c040', fg: '#fbbf24', text: 'rgba(0,0,0,0.55)'    },
+  blue:   { bg: '#60a5fa', fg: '#3b82f6', text: 'rgba(255,255,255,0.8)' },
+  green:  { bg: '#6ee7b7', fg: '#34d399', text: 'rgba(0,0,0,0.55)'    },
+  red:    { bg: '#fca5a5', fg: '#f87171', text: 'rgba(0,0,0,0.55)'    },
+  purple: { bg: '#c4b5fd', fg: '#a78bfa', text: 'rgba(0,0,0,0.55)'    },
+};
+
+/* ══════════════════════════════════════════════════════════════
+   GENEROVÁNÍ SLOŽEK
+══════════════════════════════════════════════════════════════ */
+const desktop = document.getElementById('desktop');
+let currentStudyId = null;
+
+function renderFolders() {
+  /* Smazat staré složky (ne okno studie) */
+  document.querySelectorAll('.folder-item').forEach(f => f.remove());
+
+  STUDIES.forEach((s, i) => {
+    const c   = FOLDER_COLORS[s.color] || FOLDER_COLORS.yellow;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+
+    const div = document.createElement('div');
+    div.className = 'folder-item';
+    div.id = 'folder-' + s.id;
+    div.style.left = (40 + col * 110) + 'px';
+    div.style.top  = (50 + row * 130) + 'px';
+    if (s.id === currentStudyId) div.classList.add('selected');
+
+    div.innerHTML = `
+      <div class="folder-icon">
+        <svg viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10 Q2 6 6 6 L18 6 L22 2 L44 2 Q46 2 46 4 L46 36 Q46 38 44 38 L4 38 Q2 38 2 36 Z"
+                fill="${c.bg}" opacity="0.9"/>
+          <path d="M2 12 L46 12 L46 36 Q46 38 44 38 L4 38 Q2 38 2 36 Z"
+                fill="${c.fg}"/>
+          <text x="24" y="29" text-anchor="middle" font-size="9"
+                font-family="IBM Plex Mono, monospace" fill="${c.text}">QA</text>
+        </svg>
+      </div>
+      <div class="folder-name">${t(s.folder)}</div>
+    `;
+
+    div.addEventListener('click', () => openStudy(s.id));
+    desktop.insertBefore(div, document.getElementById('studyWindow'));
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   OKNO STUDIE
+══════════════════════════════════════════════════════════════ */
+function openStudy(id) {
+  const s = STUDIES.find(x => x.id === id);
+  if (!s) return;
+  currentStudyId = id;
+
+  document.getElementById('winTitle').textContent = id + '.md';
+
+  const metrics = s.metrics.map(m => `
+    <div class="metric-card">
+      <div class="m-label">${t(m.label)}</div>
+      <div class="m-value ${m.color}">${m.value}</div>
+      <div class="m-desc">${t(m.unit)}</div>
+    </div>`).join('');
+
+  const tags = s.tags.map(tag => `<span class="win-tag">${tag}</span>`).join('');
+
+  const pdfBtn = s.pdf && s.pdf !== '#'
+    ? `<a href="${s.pdf}" target="_blank" class="pdf-btn">${SEC_LABELS.pdf[lang]}</a>`
+    : '';
+
+  document.getElementById('winBody').innerHTML = `
+    <div class="win-left">
+      <h1>${t(s.title)}</h1>
+      <div class="win-subtitle">${t(s.subtitle)}</div>
+      <div class="win-section"><h3>${SEC_LABELS.problem[lang]}</h3><p>${t(s.problem)}</p></div>
+      <div class="win-section"><h3>${SEC_LABELS.solution[lang]}</h3><p>${t(s.solution)}</p></div>
+      <div class="win-section"><h3>${SEC_LABELS.result[lang]}</h3><p>${t(s.result)}</p></div>
+      <div class="win-section">
+        <h3>${SEC_LABELS.tools[lang]}</h3>
+        <div class="win-tags">${tags}</div>
+        ${pdfBtn}
+      </div>
+    </div>
+    <div class="win-right">${metrics}</div>
+  `;
+
+  document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
+  document.getElementById('folder-' + id)?.classList.add('selected');
+  document.getElementById('studyWindow').classList.add('visible');
+}
+
+function closeStudy() {
+  currentStudyId = null;
+  document.getElementById('studyWindow').classList.remove('visible');
+  document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
+}
+
+/* ── TLAČÍTKA ── */
+document.getElementById('btnBack').addEventListener('click', () => {
+  window.location.href = 'professional.html';
+});
+document.getElementById('btnCloseStudy').addEventListener('click', closeStudy);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('studyWindow').classList.contains('visible')) closeStudy();
+    else window.location.href = 'professional.html';
+  }
+});
+
+/* ── HODINY ── */
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('tbClock').textContent = h + ':' + m;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+/* ── START ── */
+renderFolders();
+</script>
+
+</body>
+</html>

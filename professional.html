@@ -107,12 +107,11 @@
   .hotspot:hover .tip { opacity: 1; }
 
   /* ── DVEŘE VLEVO – odkaz zpět na rozcestník ── */
-  /* Odhadovaná pozice – dolaď left/top/width/height dle obrázku */
   #hotspot-door {
-    left:   1%;    /* vzdálenost od levého okraje */
-    top:    2%;   /* vzdálenost od vrchu */
-    width:  18%;   /* šířka zóny */
-    height: 98%;   /* výška zóny */
+    left:   1%;    
+    top:    2%;   
+    width:  18%;  
+    height: 98%;  
   }
 
   /* ── FIGURKA – životopis (zatím bez odkazu) ── */
@@ -197,6 +196,247 @@
      GOOGLE FONTS
      ============================================================ */
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Cinzel:wght@400;600&display=swap');
+
+  /* ══════════════════════════════════════════════
+     DESKTOP OVERLAY – monitor s případovými studiemi
+  ══════════════════════════════════════════════ */
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:        #0f1117;
+    --taskbar:   #1a1d27;
+    --window-bg: #151820;
+    --glass:     rgba(255,255,255,0.04);
+    --border:    rgba(255,255,255,0.08);
+    --accent:    #4a9eff;
+    --accent2:   #a78bfa;
+    --dt:        #c8cdd8;
+    --dt-dim:    #5a6070;
+    --green:     #34d399;
+    --red:       #f87171;
+  }
+
+  .monitor-overlay {
+    position:fixed; inset:0;
+    z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.82);
+    backdrop-filter:blur(6px);
+    opacity:0; pointer-events:none;
+    transition:opacity 0.4s ease;
+  }
+  .monitor-overlay.visible { opacity:1; pointer-events:all; }
+
+  .monitor {
+    position:relative;
+    width:min(1100px, 92vw);
+    height:min(700px, 88vh);
+    background:#0a0c12;
+    border-radius:12px;
+    border:2px solid #2a2d3a;
+    box-shadow:
+      0 0 0 1px #3a3d4a,
+      0 30px 80px rgba(0,0,0,0.9),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    animation:monitorOn 0.35s ease;
+  }
+  @keyframes monitorOn {
+    from { transform:scale(0.96); opacity:0; }
+    to   { transform:scale(1);    opacity:1; }
+  }
+  .monitor::before {
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(135deg,
+      rgba(255,255,255,0.03) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+    pointer-events:none; z-index:1; border-radius:12px;
+  }
+
+  /* Taskbar */
+  .taskbar {
+    height:32px;
+    background:var(--taskbar);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center;
+    padding:0 12px; gap:8px;
+    flex-shrink:0; position:relative; z-index:2;
+  }
+  .tb-dots { display:flex; gap:5px; }
+  .tb-dot {
+    width:10px; height:10px; border-radius:50%;
+    cursor:pointer; transition:filter 0.2s;
+  }
+  .tb-dot.close  { background:#f87171; }
+  .tb-dot.min    { background:#fbbf24; }
+  .tb-dot.max    { background:#34d399; }
+  .tb-dot:hover  { filter:brightness(1.3); }
+  .tb-title {
+    position:absolute; left:50%; transform:translateX(-50%);
+    font-size:0.7rem; color:var(--dt-dim);
+    font-family:'IBM Plex Mono', monospace; letter-spacing:0.08em;
+  }
+  .tb-clock {
+    margin-left:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.65rem; color:var(--dt-dim); letter-spacing:0.05em;
+  }
+
+  /* Desktop plocha */
+  .desktop {
+    flex:1; position:relative; overflow:hidden;
+    background:
+      linear-gradient(rgba(74,158,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,255,0.03) 1px, transparent 1px),
+      radial-gradient(ellipse at 20% 50%, rgba(74,158,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(167,139,250,0.06) 0%, transparent 60%),
+      #0f1117;
+    background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+  }
+
+  /* Složky */
+  .folder-item {
+    position:absolute;
+    width:88px;
+    display:flex; flex-direction:column; align-items:center;
+    gap:6px; cursor:pointer;
+    padding:8px 6px; border-radius:8px;
+    border:1px solid transparent;
+    transition:all 0.2s ease;
+    user-select:none;
+  }
+  .folder-item:hover {
+    background:rgba(74,158,255,0.08);
+    border-color:rgba(74,158,255,0.2);
+  }
+  .folder-item.selected {
+    background:rgba(74,158,255,0.15);
+    border-color:rgba(74,158,255,0.35);
+  }
+  .folder-icon { width:48px; height:40px; }
+  .folder-icon svg { width:100%; height:100%; }
+  .folder-name {
+    font-size:0.65rem; color:var(--dt);
+    text-align:center; line-height:1.3;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    max-width:80px; word-break:break-word;
+    font-family:'IBM Plex Sans', sans-serif;
+    white-space:pre-line;
+  }
+
+  /* Okno studie */
+  .study-window {
+    position:absolute;
+    top:30px; left:80px;
+    width:calc(100% - 100px);
+    height:calc(100% - 50px);
+    background:var(--window-bg);
+    border-radius:8px;
+    border:1px solid var(--border);
+    box-shadow:0 8px 32px rgba(0,0,0,0.6);
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transform:scale(0.97) translateY(8px);
+    transition:opacity 0.25s ease, transform 0.25s ease;
+    z-index:10; overflow:hidden;
+  }
+  .study-window.visible {
+    opacity:1; pointer-events:all;
+    transform:scale(1) translateY(0);
+  }
+  .win-header {
+    height:34px;
+    background:rgba(255,255,255,0.03);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center;
+    padding:0 12px; gap:6px; flex-shrink:0;
+  }
+  .win-dots { display:flex; gap:5px; }
+  .win-dot {
+    width:9px; height:9px; border-radius:50%; cursor:pointer;
+  }
+  .win-dot.close  { background:#f87171; }
+  .win-dot.min    { background:#fbbf24; }
+  .win-dot.max    { background:#34d399; }
+  .win-dot:hover  { filter:brightness(1.3); }
+  .win-title {
+    flex:1; text-align:center;
+    font-size:0.68rem; color:var(--dt-dim);
+    font-family:'IBM Plex Mono', monospace; letter-spacing:0.06em;
+  }
+  .win-body {
+    flex:1; overflow-y:auto;
+    padding:2rem 2.5rem;
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:2rem;
+    color:var(--dt);
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .win-left h1 {
+    font-size:clamp(1rem,1.8vw,1.3rem);
+    font-weight:600; color:#fff;
+    margin-bottom:0.4rem; letter-spacing:-0.01em;
+  }
+  .win-subtitle {
+    font-size:0.68rem; color:var(--accent);
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.1em; margin-bottom:1.5rem;
+  }
+  .win-section { margin-bottom:1.4rem; }
+  .win-section h3 {
+    font-size:0.62rem; color:var(--dt-dim);
+    letter-spacing:0.15em; text-transform:uppercase;
+    margin-bottom:0.5rem;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .win-section p { font-size:0.82rem; line-height:1.75; }
+  .win-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:0.5rem; }
+  .win-tag {
+    font-size:0.6rem;
+    font-family:'IBM Plex Mono', monospace;
+    padding:2px 8px; border-radius:4px;
+    border:1px solid rgba(74,158,255,0.3);
+    color:var(--accent);
+    background:rgba(74,158,255,0.06);
+  }
+  .win-right { display:flex; flex-direction:column; gap:1rem; }
+  .metric-card {
+    background:var(--glass);
+    border:1px solid var(--border);
+    border-radius:8px; padding:1rem 1.2rem;
+  }
+  .m-label {
+    font-size:0.6rem; color:var(--dt-dim);
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.3rem;
+  }
+  .m-value {
+    font-size:1.4rem; font-weight:600; color:#fff;
+    line-height:1; margin-bottom:0.2rem;
+  }
+  .m-value.green  { color:var(--green); }
+  .m-value.blue   { color:var(--accent); }
+  .m-value.purple { color:var(--accent2); }
+  .m-desc { font-size:0.68rem; color:var(--dt-dim); line-height:1.4; }
+
+  .win-body::-webkit-scrollbar { width:4px; }
+  .win-body::-webkit-scrollbar-track { background:transparent; }
+  .win-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+
+  /* Barvy složek */
+  .folder-yellow .folder-bg { fill:#f0c040; }
+  .folder-yellow .folder-fg { fill:#fbbf24; }
+  .folder-blue   .folder-bg { fill:#60a5fa; }
+  .folder-blue   .folder-fg { fill:#3b82f6; }
+  .folder-green  .folder-bg { fill:#6ee7b7; }
+  .folder-green  .folder-fg { fill:#34d399; }
+  .folder-red    .folder-bg { fill:#fca5a5; }
+  .folder-red    .folder-fg { fill:#f87171; }
+  .folder-purple .folder-bg { fill:#c4b5fd; }
+  .folder-purple .folder-fg { fill:#a78bfa; }
+
 </style>
 </head>
 <body>
@@ -210,9 +450,10 @@
 <div class="scene" id="scene">
 
   <!-- ── OBRÁZEK KANCELÁŘE ── -->
+
   <img
     class="office-bg"
-    src="https://github.com/JersikCZ/nes-e-tril/blob/main/VladiNes_office_bkg.png?raw=true"
+    src="https://i.imgur.com/iq9r3Lg.jpg"
     alt="Kancelář"
     draggable="false"
   >
@@ -221,16 +462,18 @@
 
   <!-- DVEŘE – zpět na rozcestník -->
   <a class="hotspot" id="hotspot-door" href="index.html">
+
   </a>
 
-  <!-- FIGURKA – životopis -->
+  <!-- FIGURKA – životopis (odkaz doplníme později) -->
   <a class="hotspot" id="hotspot-figure" href="cv.html">
-  </a>
+ 
+</a>
 
   <!-- POČÍTAČ – případové studie (odkaz doplníme později) -->
-  <div class="hotspot" id="hotspot-computer">
- 
-  </div>
+ <a class="hotspot" id="hotspot-computer" href="desktop.html">
+
+</a>
 
   <!-- KARTOTÉKA – nástroje (odkaz doplníme později) -->
   <div class="hotspot" id="hotspot-cabinet">
@@ -243,12 +486,7 @@
 <div id="coords">x: 0% | y: 0%</div>
 
 <script>
-  /* ============================================================
-     ZOBRAZENÍ SOUŘADNIC KURZORU
-     Pohybuj myší nad obrázkem a odečítej procenta.
-     Pak zadej tato procenta do CSS výše (left, top, width, height).
-     Až máš vše nastaveno, smaž tento blok a element #coords v HTML.
-     ============================================================ */
+ 
   const scene  = document.getElementById('scene');
   const coords = document.getElementById('coords');
 
@@ -258,6 +496,165 @@
     const y = ((e.clientY - r.top)  / r.height * 100).toFixed(1);
     coords.textContent = `x: ${x}% | y: ${y}%`;
   });
+</script>
+
+
+<!-- Načtení dat studií -->
+<script src="studies.js"></script>
+
+<!-- Monitor overlay -->
+<div class="monitor-overlay" id="monitorOverlay">
+  <div class="monitor">
+    <div class="taskbar">
+      <div class="tb-dots">
+        <!-- Červené tlačítko → zavře monitor, vrátí na kancelář -->
+        <div class="tb-dot close" id="btnCloseMonitor"></div>
+        <div class="tb-dot min"></div>
+        <div class="tb-dot max"></div>
+      </div>
+      <div class="tb-title">VN_Portfolio — případové studie</div>
+      <div class="tb-clock" id="tbClock">00:00</div>
+    </div>
+    <div class="desktop" id="desktop">
+      <!-- Složky se vygenerují JavaScriptem ze studies.js -->
+      <!-- Okno studie -->
+      <div class="study-window" id="studyWindow">
+        <div class="win-header">
+          <div class="win-dots">
+            <!-- Červené tlačítko → zavře okno studie, vrátí na desktop -->
+            <div class="win-dot close" id="btnCloseStudy"></div>
+            <div class="win-dot min"></div>
+            <div class="win-dot max"></div>
+          </div>
+          <div class="win-title" id="winTitle">studie.md</div>
+        </div>
+        <div class="win-body" id="winBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── GENEROVÁNÍ SLOŽEK ZE STUDIES.JS ── */
+const FOLDER_COLORS = {
+  yellow: ['#f0c040','#fbbf24','rgba(0,0,0,0.5)'],
+  blue:   ['#60a5fa','#3b82f6','rgba(255,255,255,0.7)'],
+  green:  ['#6ee7b7','#34d399','rgba(0,0,0,0.5)'],
+  red:    ['#fca5a5','#f87171','rgba(0,0,0,0.5)'],
+  purple: ['#c4b5fd','#a78bfa','rgba(0,0,0,0.5)'],
+};
+
+const desktop = document.getElementById('desktop');
+
+STUDIES.forEach((s, i) => {
+  const col = FOLDER_COLORS[s.color] || FOLDER_COLORS.yellow;
+  const div = document.createElement('div');
+  div.className = 'folder-item';
+  div.id = 'folder-' + s.id;
+  /* Rozmístění složek – 2 sloupce, řádky po 130px */
+  const col2 = i % 2;
+  const row  = Math.floor(i / 2);
+  div.style.left = (40 + col2 * 110) + 'px';
+  div.style.top  = (50 + row * 130) + 'px';
+
+  div.innerHTML = \`
+    <div class="folder-icon">
+      <svg viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 10 Q2 6 6 6 L18 6 L22 2 L44 2 Q46 2 46 4 L46 36 Q46 38 44 38 L4 38 Q2 38 2 36 Z"
+              fill="\${col[0]}" opacity="0.9"/>
+        <path d="M2 12 L46 12 L46 36 Q46 38 44 38 L4 38 Q2 38 2 36 Z"
+              fill="\${col[1]}"/>
+        <text x="24" y="29" text-anchor="middle" font-size="9"
+              font-family="IBM Plex Mono, monospace" fill="\${col[2]}">QA</text>
+      </svg>
+    </div>
+    <div class="folder-name">\${s.folder}</div>
+  \`;
+
+  div.addEventListener('dblclick', () => openStudy(s.id));
+  div.addEventListener('click', () => {
+    document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
+    div.classList.add('selected');
+  });
+  desktop.insertBefore(div, document.getElementById('studyWindow'));
+});
+
+/* ── MONITOR LOGIKA ── */
+const overlay = document.getElementById('monitorOverlay');
+
+function openDesktop() {
+  overlay.classList.add('visible');
+  updateClock();
+}
+
+document.getElementById('btnCloseMonitor').addEventListener('click', () => {
+  overlay.classList.remove('visible');
+  closeStudy();
+});
+
+overlay.addEventListener('click', e => {
+  if (e.target === overlay) {
+    overlay.classList.remove('visible');
+    closeStudy();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const win = document.getElementById('studyWindow');
+    if (win.classList.contains('visible')) closeStudy();
+    else overlay.classList.remove('visible');
+  }
+});
+
+/* ── OKNO STUDIE ── */
+function openStudy(id) {
+  const s = STUDIES.find(x => x.id === id);
+  if (!s) return;
+
+  document.getElementById('winTitle').textContent = id + '.md';
+
+  const metrics = s.metrics.map(m => \`
+    <div class="metric-card">
+      <div class="m-label">\${m.label}</div>
+      <div class="m-value \${m.color}">\${m.value}</div>
+      <div class="m-desc">\${m.unit}</div>
+    </div>\`).join('');
+
+  const tags = s.tags.map(t => \`<span class="win-tag">\${t}</span>\`).join('');
+
+  document.getElementById('winBody').innerHTML = \`
+    <div class="win-left">
+      <h1>\${s.title}</h1>
+      <div class="win-subtitle">\${s.subtitle}</div>
+      <div class="win-section"><h3>Problém</h3><p>\${s.problem}</p></div>
+      <div class="win-section"><h3>Řešení</h3><p>\${s.solution}</p></div>
+      <div class="win-section"><h3>Výsledek</h3><p>\${s.result}</p></div>
+      <div class="win-section"><h3>Nástroje &amp; metody</h3>
+        <div class="win-tags">\${tags}</div></div>
+    </div>
+    <div class="win-right">\${metrics}</div>
+  \`;
+
+  document.getElementById('studyWindow').classList.add('visible');
+}
+
+function closeStudy() {
+  document.getElementById('studyWindow').classList.remove('visible');
+  document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
+}
+
+document.getElementById('btnCloseStudy').addEventListener('click', closeStudy);
+
+/* ── HODINY ── */
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('tbClock').textContent = h + ':' + m;
+}
+updateClock();
+setInterval(updateClock, 10000);
 </script>
 
 </body>
