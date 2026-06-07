@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Láďa Jers Nešetřil – Svitek</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ── POZADÍ – stejná knihovna ── */
+.library-bg {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.35);
+  z-index: 0;
+}
+
+/* ── OVERLAY ztmavení ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1;
+}
+
+/* ── SVITEK ── */
+.scroll-wrap {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  max-width: 900px;
+  height: 82vh;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Horní okraj svitku */
+.scroll-top {
+  height: 60px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><rect width="100" height="20" fill="%23c8a45a" rx="3"/><rect y="8" width="100" height="4" fill="%23a07830"/></svg>') center/100% 100% no-repeat;
+  background-color: #c8a45a;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.6), inset 0 -3px 8px rgba(0,0,0,0.2);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.scroll-top::before, .scroll-top::after {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e8c870, #8b5a1a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.scroll-top::before { left: 10px; }
+.scroll-top::after  { right: 10px; }
+
+/* Titulek svitku */
+.scroll-title {
+  font-family: 'Cinzel', serif;
+  color: #3d1f06;
+  font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-shadow: 0 1px 2px rgba(255,220,100,0.4);
+  text-align: center;
+  padding: 0 80px;
+  z-index: 1;
+}
+
+/* Tělo svitku – scrollovatelné */
+.scroll-body {
+  flex: 1;
+  background: linear-gradient(180deg,
+    #f5e8c8 0%,
+    #f0e0b0 20%,
+    #eddfa8 50%,
+    #f0e0b0 80%,
+    #f5e8c8 100%
+  );
+  overflow-y: auto;
+  padding: 2rem 4rem;
+  box-shadow: inset 0 0 30px rgba(100,60,0,0.15);
+  position: relative;
+}
+
+/* Okraje svitku */
+.scroll-body::before, .scroll-body::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, rgba(100,60,0,0.12), transparent);
+  pointer-events: none;
+}
+.scroll-body::before { left: 0; }
+.scroll-body::after  { right: 0; background: linear-gradient(270deg, rgba(100,60,0,0.12), transparent); }
+
+/* Text ve svitku */
+.scroll-body h1 {
+  font-family: 'Cinzel', serif;
+  color: #3d1f06;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  letter-spacing: 0.15em;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid rgba(100,60,0,0.3);
+}
+.scroll-body h2 {
+  font-family: 'Cinzel', serif;
+  color: #5a2d0c;
+  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+  letter-spacing: 0.1em;
+  margin: 1.5rem 0 0.8rem;
+}
+.scroll-body p {
+  font-family: 'Cormorant Garamond', serif;
+  color: #2d1505;
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  line-height: 1.9;
+  text-align: justify;
+  margin-bottom: 1rem;
+  text-indent: 1.5em;
+}
+.scroll-body p:first-of-type { text-indent: 0; }
+
+/* Dolní okraj svitku */
+.scroll-bottom {
+  height: 60px;
+  background-color: #c8a45a;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 3px 8px rgba(0,0,0,0.2);
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scroll-bottom::before, .scroll-bottom::after {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 50px; height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e8c870, #8b5a1a);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.scroll-bottom::before { left: 10px; }
+.scroll-bottom::after  { right: 10px; }
+
+/* Navigace dole */
+.scroll-nav {
+  display: flex;
+  gap: 1rem;
+  z-index: 1;
+}
+.scroll-nav a {
+  font-family: 'Cinzel', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: #3d1f06;
+  text-decoration: none;
+  border: 1px solid rgba(61,31,6,0.4);
+  padding: 0.25rem 0.8rem;
+  border-radius: 20px;
+  background: rgba(255,220,120,0.3);
+  transition: all 0.2s;
+}
+.scroll-nav a:hover {
+  background: rgba(255,220,120,0.6);
+  border-color: rgba(61,31,6,0.7);
+}
+
+/* Loading stav */
+.scroll-loading {
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  color: #5a3a10;
+  padding: 3rem;
+  font-size: 1.1rem;
+}
+
+/* Chybový stav */
+.scroll-error {
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  color: #8b2020;
+  padding: 3rem;
+  font-size: 1rem;
+}
+
+/* Scrollbar styling */
+.scroll-body::-webkit-scrollbar { width: 6px; }
+.scroll-body::-webkit-scrollbar-track { background: rgba(100,60,0,0.1); }
+.scroll-body::-webkit-scrollbar-thumb { background: rgba(100,60,0,0.35); border-radius: 3px; }
+.scroll-body::-webkit-scrollbar-thumb:hover { background: rgba(100,60,0,0.55); }
+
+/* ── MOBIL ── */
+.rotate-notice {
+  display: none;
+  position: fixed; inset: 0;
+  background: #0d0a14; z-index: 999;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; color: #c8b882;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 1.1rem;
+  text-align: center; padding: 2rem;
+}
+.rotate-notice .arrow { font-size: 3rem; animation: rotA 2s ease-in-out infinite; }
+@keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+@media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+</style>
+</head>
+<body>
+
+<div class="rotate-notice">
+  <div class="arrow">📱</div>
+  <div>Otočte prosím telefon<br>na šířku</div>
+</div>
+
+<!-- Pozadí knihovny -->
+<img class="library-bg" src="literature.png" alt="Knihovna">
+<div class="overlay"></div>
+
+<!-- Svitek -->
+<div class="scroll-wrap">
+  <div class="scroll-top">
+    <div class="scroll-title" id="scrollTitle">…</div>
+  </div>
+
+  <div class="scroll-body" id="scrollBody">
+    <div class="scroll-loading">Načítám text…</div>
+  </div>
+
+  <div class="scroll-bottom">
+    <nav class="scroll-nav">
+      <a href="javascript:history.back()">← Zpět</a>
+      <a href="povidky.html">Knihovna</a>
+    </nav>
+  </div>
+</div>
+
+<script>
+// Načte parametry z URL: svitek.html?chapter=saly_ch01&title=Prolog
+const params  = new URLSearchParams(window.location.search);
+const chapter = params.get('chapter');   // název souboru bez .html
+const title   = params.get('title') || 'Povídka';
+
+document.getElementById('scrollTitle').textContent = title;
+document.title = title + ' – Láďa Jers Nešetřil';
+
+if (!chapter) {
+  document.getElementById('scrollBody').innerHTML =
+    '<div class="scroll-error">Chybí název kapitoly v URL.<br>Příklad: svitek.html?chapter=saly_ch01&title=Prolog</div>';
+} else {
+  fetch(chapter + '.html')
+    .then(r => {
+      if (!r.ok) throw new Error('Soubor nenalezen');
+      return r.text();
+    })
+    .then(html => {
+      document.getElementById('scrollBody').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('scrollBody').innerHTML =
+        '<div class="scroll-error">Text se nepodařilo načíst.<br>Zkontroluj že soubor <strong>' +
+        chapter + '.html</strong> existuje na serveru.</div>';
+    });
+}
+</script>
+
+</body>
+</html>

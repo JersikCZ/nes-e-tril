@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa – DnD</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#2a5a1a;
+}
+
+/* ── VIEWPORT – horizontální scroll ── */
+.map-viewport {
+  width:100vw; height:100vh;
+  overflow-x:scroll;
+  overflow-y:hidden;
+  cursor:none;
+}
+.map-viewport::-webkit-scrollbar { height:6px; }
+.map-viewport::-webkit-scrollbar-track { background:rgba(0,0,0,0.3); }
+.map-viewport::-webkit-scrollbar-thumb { background:rgba(100,80,40,0.6); border-radius:3px; }
+
+/* ── MAPA WRAPPER ── */
+.map-wrap {
+  width:3000px;
+  height:100vh;
+  position:relative;
+  /* Tráva – jednoduchý CSS pattern místo SVG */
+  background-color:#3a7a2a;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 7px,
+      rgba(0,0,0,0.04) 7px,
+      rgba(0,0,0,0.04) 8px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 7px,
+      rgba(0,0,0,0.04) 7px,
+      rgba(0,0,0,0.04) 8px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 2px,
+      transparent 2px,
+      transparent 16px
+    );
+}
+
+/* ── CESTA – SVG přes celou mapu ── */
+.map-svg {
+  position:absolute; inset:0;
+  width:3000px; height:100%;
+  pointer-events:none;
+}
+
+/* ── OBRÁZKY ── */
+
+#loc-castle {
+  top:2%;
+  left:25px;
+}
+#loc-castle img {
+  height:50vh;¨}
+
+#loc-strahd {
+  top: 50px; 
+  left: 520px;
+}
+#loc-strahd img {
+  height: 15vh; /* ← dolaď velikost */
+}
+
+#loc-mine {top: 505px; left: 720px; }
+#loc-mine img {height: 15vh; }
+
+.coast-img {
+  position:absolute;
+  bottom:0;
+  left:0;
+  height:60vh;
+  width:auto;
+  pointer-events:none;
+  user-select:none;
+  z-index:4;
+}
+
+.strahd-img {
+  position:absolute;
+  bottom:100;
+  left:100;
+  height:60vh;
+  width:auto;
+  pointer-events:none;
+  user-select:none;
+  z-index:4;
+}
+
+
+
+/* ── KLIKATELNÉ LOKACE ── */
+.map-location {
+  position:absolute;
+  display:block;
+  text-decoration:none;
+  cursor:none;
+  transition:transform 0.3s ease, filter 0.3s ease;
+  transform-origin:bottom center;
+  z-index:10;
+}
+.map-location img {
+  display:block;
+  width:auto;
+  pointer-events:none;
+  user-select:none;
+}
+.map-location:hover {
+  transform:scale(1.2);
+  filter:brightness(1.3) drop-shadow(0 0 20px rgba(255,255,255,0.8));
+  z-index:50;
+}
+
+/* Přístav */
+#loc-port {
+  bottom:0;
+  left:370px; /* ← dolaď podle obrázku pobřeží */
+  height:15vh;
+}
+#loc-port img {
+  height:15vh;
+}
+
+/* ── RYTÍŘ ── */
+.knight-cursor {
+  position:fixed;
+  pointer-events:none;
+  z-index:200;
+  transform:translate(-50%, -50%);
+  width:48px; height:48px;
+}
+.knight-cursor img {
+  width:48px; height:48px;
+  image-rendering:pixelated;
+}
+
+/* ── SOUŘADNICOVÝ HELPER ── */
+#coords {
+  position:fixed; bottom:1rem; right:1rem;
+  background:rgba(0,0,0,0.6); color:#d4a85a;
+  font-family:monospace; font-size:0.75rem;
+  padding:0.4rem 0.8rem; border-radius:4px;
+  pointer-events:none; z-index:300; letter-spacing:0.1em;
+}
+</style>
+</head>
+<body>
+
+<div class="map-viewport" id="viewport">
+  <div class="map-wrap" id="mapWrap">
+
+    <!-- Cesta – jen SVG path, žádné vzory -->
+    <svg class="map-svg" viewBox="0 0 3000 900"
+         preserveAspectRatio="xMinYMin slice"
+         xmlns="http://www.w3.org/2000/svg">
+      <!-- Stín cesty -->
+      <path d="M 300,280 Q 500,300 700,260 Q 900,220 1100,250 Q 1300,280 1500,240
+               Q 1700,200 1900,230 Q 2100,260 2300,220 Q 2500,180 2700,210 Q 2900,240 3000,230"
+            fill="none" stroke="#7a5818" stroke-width="24"
+            stroke-linecap="round" opacity="0.5"/>
+      <!-- Cesta  -->
+      <path d="M 300,280 Q 500,300 700,260 Q 900,220 1100,250 Q 1300,280 1500,240
+               Q 1700,200 1900,230 Q 2100,260 2300,220 Q 2500,180 2700,210 Q 2900,240 3000,230"
+            fill="none" stroke="#c4943a" stroke-width="16"
+            stroke-linecap="round" opacity="0.9"/>
+
+
+<!-- Cesta k přístavu – dolů ── -->
+<path d="M 436,298 Q 460,340 430,400 Q 400,460 440,520 Q 470,570 435,614"
+      fill="none" stroke="#7a5818" stroke-width="24"
+      stroke-linecap="round" opacity="0.5"/>
+<path d="M 436,298 Q 460,340 430,400 Q 400,460 440,520 Q 470,570 435,614"
+      fill="none" stroke="#c4943a" stroke-width="16"
+      stroke-linecap="round" opacity="0.9"/>
+
+<!-- Cesta Strahd – dolů ── -->
+<path d="M 560,130 Q 600,187 546,274"
+      fill="none" stroke="#7a5818" stroke-width="24"
+      stroke-linecap="round" opacity="0.5"/>
+<path d="M 560,130 Q 600,187 546,274"
+      fill="none" stroke="#c4943a" stroke-width="16"
+      stroke-linecap="round" opacity="0.9"/>
+
+<!-- Cesta k dolu – dolů s vlnkou -->
+<path d="M 760,260 Q 790,340 750,420 Q 720,490 760,555"
+      fill="none" stroke="#7a5818" stroke-width="24"
+      stroke-linecap="round" opacity="0.5"/>
+<path d="M 760,260 Q 790,340 750,420 Q 720,490 760,555"
+      fill="none" stroke="#c4943a" stroke-width="16"
+      stroke-linecap="round" opacity="0.9"/>
+    </svg>
+
+    <!-- Zámek -->
+   <a class="map-location" id="loc-castle" href="fantasy.html">
+  <img src="mapa/castle.png" alt="Zámek">
+</a>
+
+    <!-- Pobřeží -->
+    <img class="coast-img" src="mapa/cost.png" alt="Pobřeží">
+
+    <!-- ══ KLIKATELNÉ LOKACE ══
+         Přidávej sem nové lokace stejným způsobem.
+         Dolaď left/bottom/height pomocí souřadnicového helperu.
+    ══ -->
+
+    <!-- Přístav – Whisper in Shade -->
+    <a class="map-location" id="loc-port" href="whisper.html">
+      <img src="mapa/port.png" alt="Přístav">
+    </a>
+
+ <!-- Strahd -->
+   <a class="map-location" id="loc-strahd" href="strahd.html">
+  <img src="mapa/strahd.png" alt="Curse of Strahd">
+</a>
+
+<!-- Phandalin -->
+<a class="map-location" id="loc-mine" href="phandalin.html">
+  <img src="mapa/mine.png" alt="Důl">
+</a>
+
+
+
+    <!-- Sem přidávej další lokace:
+    <a class="map-location" id="loc-xxx" href="xxx.html">
+      <img src="mapa/xxx.png" alt="Název">
+    </a>
+    -->
+
+  </div>
+</div>
+
+<!-- Rytíř jako kurzor -->
+<div class="knight-cursor" id="knightCursor">
+  <img src="mapa/knight.png" alt="">
+</div>
+
+<div id="coords">x: 0 | scroll: 0</div>
+
+<script>
+/* ── RYTÍŘ sleduje myš ── */
+const knight   = document.getElementById('knightCursor');
+const viewport = document.getElementById('viewport');
+const coords   = document.getElementById('coords');
+
+document.addEventListener('mousemove', e => {
+  knight.style.left = e.clientX + 'px';
+  knight.style.top  = e.clientY + 'px';
+coords.textContent = `x: ${e.clientX + Math.round(viewport.scrollLeft)} | y: ${e.clientY}`;});
+
+/* ── Kolečko myši = horizontální scroll ── */
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  viewport.scrollLeft += e.deltaY * 2;
+}, { passive: false });
+
+/* ── Schovat/zobrazit rytíře ── */
+document.addEventListener('mouseleave', () => { knight.style.opacity = '0'; });
+document.addEventListener('mouseenter', () => { knight.style.opacity = '1'; });
+</script>
+
+</body>
+</html>

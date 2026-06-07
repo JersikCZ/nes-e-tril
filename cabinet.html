@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vladimír Nešetřil – Nástroje & Dokumenty</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; height:100%;
+  overflow:hidden;
+  background:#1a0f08;
+  font-family:'Cormorant Garamond', serif;
+}
+
+.scene {
+  position:relative;
+  width:100vw; height:100vh;
+  overflow:hidden;
+}
+
+/* Kancelářské pozadí – ztmavené */
+.office-bg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:center;
+  display:block;
+  user-select:none; pointer-events:none;
+  filter:brightness(0.35);
+}
+
+/* Obrázek kartotéky – centrovaný */
+.cabinet-img {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%, -50%);
+  height:110vh;
+  width:auto;
+  max-width:90vw;
+  object-fit:contain;
+  display:block;
+  user-select:none; pointer-events:none;
+  z-index:2;
+}
+
+/* ── KLIKATELNÉ ZÓNY ── */
+/* Pozice jsou zatím vlevo – přesuň je myší pomocí souřadnic */
+.hotspot {
+  position:absolute;
+  cursor:pointer;
+  z-index:10;
+  text-decoration:none;
+
+}
+
+/* Hover – zvětšení zóny */
+.hotspot:hover {
+  transform:translateY(-22%) scaleY(1.5);
+  z-index:50;
+}
+
+/* Obrázek uvnitř zóny */
+.hotspot img {
+  width:100%; height:100%;
+  object-fit:contain;
+  display:block;
+  pointer-events:none;
+  transition:filter 0.25s ease;
+}
+.hotspot:hover img {
+  filter:brightness(1.15) drop-shadow(0 0 12px rgba(212,168,90,0.5));
+}
+
+/* Popisek uvnitř složky – v bílém obdélníku */
+.hotspot .tip {
+  position:absolute;
+  top:42%;        /* v bílé části obrázku top.png */
+  left:50%;
+  transform:translateX(-50%);
+  color:#1a1a1a;
+  font-family:'Cinzel', serif;
+  font-size:clamp(0.58rem, 0.75vw, 0.72rem);
+  letter-spacing:0.08em;
+  text-align:center;
+  line-height:1.3;
+  white-space:normal;
+  width:85%;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.25s ease;
+}
+.hotspot:hover .tip { opacity:1; }
+
+/* ── POZICE ZÓN ──
+   Zatím všechny vlevo – přesuň pomocí souřadnicového helperu.
+   left/top = vzdálenost od levého/horního okraje
+   width/height = velikost zóny
+   ────────────────────────────────────────── */
+
+/* SKUPINA 1 – Nástroje ke stažení */
+#hs-defect    { left:28.5%; top:12.3%; width:12%; height:7%; }
+#hs-hourly    { left:61%; top:12.3%; width:12%; height:7%; }
+#hs-prodcheck { left:50%; top:9.1%; width:11%; height:6.5%; }
+#hs-soon1     { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-soon2     { left:38.8%; top:33.3%; width:12%; height:7%; }
+
+/* SKUPINA 2 – E-learning */
+#hs-ishikawa  { left:27%; top:39.7%; width:12%; height:7%; }
+#hs-5why      { left:63.5%; top:37.2%; width:12%; height:7%; }
+#hs-elearn3   { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-elearn4   { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-elearn5   { left:38.8%; top:33.3%; width:12%; height:7%; }
+
+/* SKUPINA 3 – Dokumenty */
+#hs-doc1      { left:38.8%; top:33.3%; width:12%; height:7%; } 
+#hs-doc2      { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-doc3      { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-doc4      { left:38.8%; top:33.3%; width:12%; height:7%; }
+#hs-doc5      { left:38.8%; top:33.3%; width:12%; height:7%; }
+
+/* ── KULATÉ TLAČÍTKO ZPĚT ──
+   Bez textu, zlatá záře při hoveru.
+   Napozicuj nad knoflík na kartotéce. */
+.back-round {
+  position:absolute;
+  width:4.5%;
+  aspect-ratio:1.3;
+  border-radius:50%;
+  cursor:pointer;
+  text-decoration:none;
+  z-index:88;
+  background:rgba(0,0,0,0.01);
+  /* Pozice – dolaď */
+  left:48.5%; top:83%;
+  transition:box-shadow 0.4s ease, background 0.4s ease;
+}
+.back-round:hover {
+  background:rgba(212,168,90,0.15);
+ box-shadow:
+    0 0 50px 15px rgba(212,168,90,0.25),
+    0 0 70px 25px rgba(212,168,90,0.15),
+    0 0 100px 40px rgba(212,168,90,0.06);
+}
+
+/* ── JAZYKY ── */
+.lang-btns {
+  position:fixed; top:1.2rem; right:1.2rem; z-index:50;
+  display:flex; gap:6px;
+}
+.lang-btn {
+  font-family:'Cinzel', serif; font-size:0.6rem; letter-spacing:0.12em;
+  border:1px solid rgba(212,168,90,0.35); background:rgba(10,5,2,0.55);
+  backdrop-filter:blur(4px); color:rgba(212,168,90,0.65);
+  border-radius:20px; padding:3px 11px; cursor:pointer; transition:all 0.2s;
+}
+.lang-btn.active, .lang-btn:hover {
+  background:rgba(212,168,90,0.75); color:#1a0f08; border-color:transparent;
+}
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  position:fixed;
+  left:50%; bottom:1.5rem;
+  transform:translateX(-50%) translateY(20px);
+  width:min(660px, 85vw);
+  z-index:60;
+  background:rgba(10,6,2,0.92);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(212,168,90,0.2);
+  border-left:3px solid #c8952a;
+  border-radius:10px;
+  padding:1rem 1.3rem;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.3s ease, transform 0.3s ease;
+}
+.detail-panel.visible {
+  opacity:1; pointer-events:all;
+  transform:translateX(-50%) translateY(0);
+}
+.dp-close {
+  position:absolute; top:0.5rem; right:0.7rem;
+  background:none; border:none;
+  color:rgba(212,168,90,0.4); font-size:1rem;
+  cursor:pointer; transition:color 0.2s;
+}
+.dp-close:hover { color:rgba(212,168,90,1); }
+.dp-title {
+  font-family:'Cinzel', serif;
+  color:#e8d5a8; font-size:clamp(0.75rem,1.1vw,0.92rem);
+  letter-spacing:0.15em; margin-bottom:0.3rem;
+}
+.dp-desc {
+  font-size:clamp(0.7rem,0.95vw,0.82rem);
+  color:rgba(200,180,140,0.85); line-height:1.65; margin-bottom:0.6rem;
+}
+.dp-btn {
+  display:inline-block;
+  font-family:'Cinzel', serif; font-size:0.58rem; letter-spacing:0.12em;
+  padding:0.28rem 0.85rem; border-radius:20px;
+  border:1px solid rgba(212,168,90,0.4);
+  color:#d4a85a; background:rgba(212,168,90,0.08);
+  text-decoration:none; cursor:pointer; transition:all 0.2s; margin-right:0.4rem;
+}
+.dp-btn:hover { background:rgba(212,168,90,0.18); border-color:rgba(212,168,90,0.7); }
+.dp-soon {
+  font-family:'Cinzel', serif; font-size:0.58rem;
+  color:rgba(212,168,90,0.35); letter-spacing:0.12em;
+}
+
+
+
+/* Mobil */
+.rotate-notice {
+  display:none; position:fixed; inset:0;
+  background:#1a0f08; z-index:999;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:1rem; color:#c8b882;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:1.1rem; text-align:center; padding:2rem;
+}
+.rotate-notice .arrow { font-size:3rem; animation:rotA 2s ease-in-out infinite; }
+@keyframes rotA { 0%,100%{transform:rotate(0)} 50%{transform:rotate(90deg)} }
+@media (max-width:599px) and (orientation:portrait) { .rotate-notice{display:flex;} }
+
+/* ── ROZBALENÁ SLOŽKA – overlay po kliknutí ── */
+.folder-expanded {
+  position:fixed;
+  z-index:80;
+  background:transparent;
+  pointer-events:all;
+  /* Pozice a velikost se nastaví JavaScriptem ze zóny */
+  transition:all 0.35s cubic-bezier(0.25,0.8,0.25,1);
+}
+
+.folder-expanded img.folder-bg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:contain;
+  display:block;
+}
+
+.folder-expanded .folder-content {
+  position:absolute;
+  /* Bílá oblast top.png – přibližně horních 35% */
+  top:10%; left:8%; right:8%;
+  height:30%;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  gap:0.4rem;
+  pointer-events:none;
+}
+
+.folder-expanded .fc-title {
+  font-family:'Cinzel', serif;
+  font-size:clamp(0.7rem, 1.2vw, 1rem);
+  color:#1a1a1a;
+  letter-spacing:0.12em;
+  text-align:center;
+  line-height:1.3;
+}
+
+.folder-expanded .fc-desc {
+  font-family:'Cormorant Garamond', serif;
+  font-size:clamp(0.9rem, 1.8vw, 1.5rem);
+  color:#2a2a2a;
+  text-align:center;
+  line-height:1.5;
+  padding:0 0.5rem;
+}
+
+.folder-expanded .fc-btn {
+  display:inline-block;
+  margin-top:0.3rem;
+  font-family:'Cinzel', serif;
+  font-size:clamp(0.5rem, 0.7vw, 0.62rem);
+  letter-spacing:0.12em;
+  padding:0.25rem 0.8rem;
+  border-radius:20px;
+  border:1px solid rgba(100,60,0,0.4);
+  color:#5a3000;
+  background:rgba(100,60,0,0.08);
+  text-decoration:none; cursor:pointer;
+  pointer-events:all;
+  transition:all 0.2s;
+}
+.folder-expanded .fc-btn:hover {
+  background:rgba(100,60,0,0.18);
+  border-color:rgba(100,60,0,0.7);
+}
+
+.folder-expanded .fc-soon {
+  font-family:'Cinzel', serif;
+  font-size:0.55rem;
+  color:rgba(100,60,0,0.4);
+  letter-spacing:0.12em;
+  margin-top:0.3rem;
+}
+
+/* Backdrop – klik mimo zavře */
+.folder-backdrop {
+  position:fixed; inset:0;
+  z-index:75;
+  background:transparent;
+  cursor:default;
+}
+
+</style>
+</head>
+<body>
+
+<div class="rotate-notice">
+  <div class="arrow">📱</div>
+  <div>Otočte prosím telefon<br>na šířku</div>
+</div>
+
+<div class="scene" id="scene">
+
+  <!-- Ztmavené kancelářské pozadí -->
+  <img class="office-bg" src="https://i.imgur.com/iq9r3Lg.jpg" alt="Kancelář" draggable="false">
+
+  <!-- Obrázek kartotéky – nahraď cabinet.jpg -->
+  <img class="cabinet-img" src="cabinet.png" alt="Kartotéka">
+
+  <!-- ══ KULATÉ TLAČÍTKO ZPĚT ══
+       Napozicuj nad knoflík kartotéky pomocí left/top v CSS -->
+  <a class="back-round" href="professional.html"></a>
+
+  <!-- ══ SKUPINA 1 – NÁSTROJE KE STAŽENÍ ══ -->
+
+  <div class="hotspot" id="hs-defect">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-defect">Defect Tracker</span>
+  </div>
+
+  <div class="hotspot" id="hs-hourly">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-hourly">Hourly Check</span>
+  </div>
+
+  <div class="hotspot" id="hs-prodcheck">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-prodcheck">Production Checklist</span>
+  </div>
+
+  <div class="hotspot" id="hs-soon1">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-soon1">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-soon2">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-soon2">Připravuje se</span>
+  </div>
+
+  <!-- ══ SKUPINA 2 – E-LEARNING ══ -->
+
+  <div class="hotspot" id="hs-ishikawa">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-ishikawa">Ishikawa</span>
+  </div>
+
+  <div class="hotspot" id="hs-5why">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-5why">5 Why</span>
+  </div>
+
+  <div class="hotspot" id="hs-elearn3">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-elearn3">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-elearn4">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-elearn4">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-elearn5">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-elearn5">Připravuje se</span>
+  </div>
+
+  <!-- ══ SKUPINA 3 – DOKUMENTY ══ -->
+
+  <div class="hotspot" id="hs-doc1">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-doc1">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-doc2">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-doc2">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-doc3">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-doc3">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-doc4">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-doc4">Připravuje se</span>
+  </div>
+
+  <div class="hotspot" id="hs-doc5">
+    <img src="top.png" alt="">
+    <span class="tip" id="tip-doc5">Připravuje se</span>
+  </div>
+
+</div><!-- /scene -->
+
+<!-- Jazyky -->
+<div class="lang-btns">
+  <button class="lang-btn" onclick="setLang('cs')">CZ</button>
+  <button class="lang-btn active" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('de')">DE</button>
+</div>
+
+<!-- Detail panel -->
+<div class="detail-panel" id="detailPanel">
+  <button class="dp-close" id="dpClose">✕</button>
+  <div class="dp-title"   id="dpTitle"></div>
+  <div class="dp-desc"    id="dpDesc"></div>
+  <div id="dpActions"></div>
+</div>
+
+<div id="coords">x: 0% | y: 0%</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DATA – obsah složek
+   action: 'download' / 'open' / 'soon'
+   file:   cesta k souboru
+══════════════════════════════════════════════════════════════ */
+const ITEMS = {
+  'hs-defect': {
+    title:    { cs:'Sledování chybovosti',       en:'Defect Tracker',        de:'Fehlerverfolgung' },
+    desc:     { cs:'Offline HTML aplikace pro týdenní kumulativní sledování defektů na výrobním závodě. Určena pro android tablet. Obsahuje grafy, CSV export a měsíční uzávěrky.',
+                en:'Offline HTML application for tracking weekly cumulative defects at a manufacturing plant. Designed for Android tablets. Includes charts, PDF export, and weekly reports.',
+                de:'Offline-HTML-Anwendung zur wöchentlichen kumulativen Erfassung von Defekten in einem Produktionswerk. Für Android-Tablets konzipiert. Enthält Diagramme, PDF-Export und wöchentliche Abschlüsse.' },
+    action:   'download', file:'tools/defect_tracker_en.html',
+    btn:      { cs:'⬇ Stáhnout', en:'⬇ Download', de:'⬇ Herunterladen' },
+    tip:      { cs:'Sledování chybovosti',       en:'Defect Tracker',        de:'Fehlerverfolgung' },
+  },
+
+  'hs-hourly': {
+    title:    { cs:'Hodinová kontrola', en:'Hourly Check', de:'Stündliche Überprüfung' },
+
+    desc:     { cs:"Offline HTML aplikace pro provedení kontroly výrobní linky. Vytvořeno pro použití android tabletu. Součástí je autosave vložených dat, export do PDF.",
+                en:'Shift checklist for inspecting production stations. Offline HTML – designed for use on an Android tablet. Features include autosave of entered data, export to PDF, manual entry of employee names, and the ability to add additional stations. The checklist is divided into morning and afternoon inspections.',
+                de:'Schicht-Checkliste zur Überprüfung der Fertigungsstationen. Offline-HTML – entwickelt für die Verwendung auf Android-Tablets. Enthält eine automatische Speicherung der eingegebenen Daten, Export als PDF, manuelle Eingabe der Namen der Mitarbeiter sowie die Möglichkeit, weitere Standorte hinzuzufügen. Die Checkliste ist in eine morgendliche und eine nachmittägliche Kontrolle unterteilt.' },
+
+    action:   'download', file:'tools/hourly_checklist.html',
+    btn:      { cs:'⬇ Stáhnout', en:'⬇ Download', de:'⬇ Herunterladen' },
+    tip:      { cs:'Hodinová kontrola', en:'Hourly Check', de:'Stündliche Überprüfung'  },
+  },
+  'hs-prodcheck': {
+    title:    { cs:'Výrobní Checklist', en:'Production Checklist',  de:'Herstellung Checklist' },
+
+    desc:     { cs:'Offline HTML aplikace - checklist pro android tablet. Export do PDF, manuální vložení jmen pracovníků, možnost přidání dalších pracovišť. Checklist je rozdělen pro ranní a odpolední kontrolu.',
+                en:'Offline HTML app – checklist for Android tablets. Export to PDF, manual entry of employee names, option to add additional work sites. The checklist is divided into morning and afternoon checks.',
+                de:'Offline-HTML-Anwendung – Checkliste für Android-Tablets. Export als PDF, manuelle Eingabe der Namen der Mitarbeiter, Möglichkeit, weitere Arbeitsstätten hinzuzufügen. Die Checkliste ist in eine morgendliche und eine nachmittägliche Kontrolle unterteilt.' },
+    action:   'download', file:'tools/production_checklist.html',
+    btn:      { cs:'⬇ Stáhnout', en:'⬇ Download', de:'⬇ Herunterladen' },
+    tip:      { cs:'Výrobní Checklist', en:'Production Checklist', de:'Herstellung Checklist' },
+  },
+  'hs-ishikawa': {
+    title:    { cs:'Jak na Ishikawa diagram', en:'How to use Ishikawa diagram', de:'Ishikawa-Diagramm – Anleitung' },
+    desc:     { cs:'Interaktivní průvodce tvorbou diagramu příčin a následků. Krok za krokem s praktickým příkladem.',
+                en:'Interactive guide to creating a cause-and-effect diagram. Step by step with a practical example.',
+                de:'Interaktiver Leitfaden zum Ursache-Wirkungs-Diagramm. Schritt für Schritt mit praktischem Beispiel.' },
+    action:   'open', file:'elearning/ishikawa.html',
+    btn:      { cs:'▶ Otevřít', en:'▶ Open', de:'▶ Öffnen' },
+    tip:      { cs:'Ishikawa diagram', en:'Ishikawa diagram', de:'Ishikawa-Diagramm' },
+  },
+  'hs-5why': {
+    title:    { cs:'Metoda 5 Why', en:'5 Why method', de:'5-Warum-Methode' },
+    desc:     { cs:'Interaktivní průvodce metodou 5x Proč. Jak správně klást otázky a najít kořenovou příčinu.',
+                en:'Interactive guide to the 5 Whys method. How to ask the right questions and find the root cause.',
+                de:'Interaktiver Leitfaden zur 5-Warum-Methode. Richtig fragen und die Ursache finden.' },
+    action:   'soon',
+    tip:      { cs:'5 Why', en:'5 Why', de:'5 Why' },
+  },
+};
+
+/* Všechny ostatní id → "připravuje se" */
+const SOON = {
+  title: { cs:'Připravuje se', en:'Coming soon', de:'Demnächst' },
+  desc:  { cs:'Tento obsah se připravuje.', en:'This content is being prepared.', de:'Dieser Inhalt wird vorbereitet.' },
+  action:'soon',
+  tip:   { cs:'Připravuje se', en:'Coming soon', de:'Demnächst' },
+};
+
+let lang = 'en';
+function t(obj) { return (typeof obj==='string') ? obj : (obj[lang]||obj.cs||''); }
+
+/* ── EXPAND/COLLAPSE SLOŽKY ── */
+let expandedEl = null;
+
+function makeFolderSVG(titleText, w, h) {
+  /* ── OUŠKO ──
+     Lichoběžník se zkosením ~60° na obou bocích.
+     Šířka ouška se vypočítá z délky textu + padding.
+     Uvnitř bílý obdélník s názvem.
+  */
+  const fontSize  = Math.max(13, Math.round(h * 0.038));
+  const padding   = fontSize * 1.4;          /* padding vlevo/vpravo */
+  const approxCharW = fontSize * 0.62;       /* průměrná šířka znaku Cinzel */
+  const textW     = titleText.length * approxCharW;
+  const whiteW    = Math.round(textW + padding * 2);  /* šířka bílého obdélníku */
+  const skew      = Math.round(h * 0.032);   /* zkosení boku = offset nahoře */
+  const tabH      = Math.round(h * 0.09);    /* výška ouška */
+  /* Lichoběžník: dole širší o 2*skew než nahoře */
+  const tabTopX   = 0;
+  const tabTopW   = whiteW + skew * 2;       /* šířka dole */
+  const bodyY     = Math.round(tabH * 0.95); /* ouško přesahuje do těla */
+  const bodyH     = h - bodyY;
+  const whiteH    = Math.round(tabH * 0.78); /* výška bílého obdélníku */
+  const whiteY    = Math.round((tabH - whiteH) / 2);
+  const whiteX    = skew;                    /* bílý obdélník začíná za zkosením */
+
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
+      xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;display:block;">
+    <defs>
+      <linearGradient id="folderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#e8c05a"/>
+        <stop offset="40%"  stop-color="#d4a83a"/>
+        <stop offset="100%" stop-color="#b88a20"/>
+      </linearGradient>
+      <linearGradient id="folderTab" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#f0ce6a"/>
+        <stop offset="100%" stop-color="#d4a83a"/>
+      </linearGradient>
+      <filter id="fShadow">
+        <feDropShadow dx="3" dy="5" stdDeviation="10" flood-color="rgba(0,0,0,0.45)"/>
+      </filter>
+    </defs>
+    <g filter="url(#fShadow)">
+      <!-- Ouško – lichoběžník (zkosení 60° na bocích) -->
+      <!-- body: levý dolní, pravý dolní, pravý horní (posunutý dovnitř o skew), levý horní (posunutý dovnitř o skew) -->
+      <polygon
+        points="${tabTopX},${tabH} ${tabTopW},${tabH} ${tabTopW - skew},0 ${tabTopX + skew},0"
+        fill="url(#folderTab)" stroke="rgba(0,0,0,0.18)" stroke-width="0.8"/>
+      <!-- Bílý obdélník uvnitř ouška -->
+      <rect x="${whiteX}" y="${whiteY}" width="${whiteW}" height="${whiteH}" rx="2"
+            fill="#fff" opacity="0.92"/>
+      <!-- Název ve středu bílého obdélníku -->
+      <text
+        x="${whiteX + whiteW / 2}"
+        y="${whiteY + whiteH / 2 + fontSize * 0.36}"
+        text-anchor="middle"
+        font-family="Cinzel, serif"
+        font-size="${fontSize}"
+        font-weight="600"
+        fill="rgba(40,20,0,0.82)"
+        letter-spacing="0.5">${titleText}</text>
+      <!-- Tělo složky -->
+      <rect x="0" y="${bodyY}" width="${w}" height="${bodyH}" rx="3"
+            fill="url(#folderGrad)" stroke="rgba(0,0,0,0.18)" stroke-width="0.8"/>
+      <!-- Jemná linka pod ouškem -->
+      <line x1="0" y1="${bodyY + Math.round(bodyH*0.10)}"
+            x2="${w}" y2="${bodyY + Math.round(bodyH*0.10)}"
+            stroke="rgba(0,0,0,0.07)" stroke-width="0.8"/>
+      <!-- Pravý stín -->
+      <rect x="${w - Math.round(w*0.03)}" y="${bodyY}" width="${Math.round(w*0.03)}" height="${bodyH}"
+            fill="rgba(0,0,0,0.06)" rx="0 3 3 0"/>
+    </g>
+  </svg>`;
+}
+
+function expandFolder(hotspot, data) {
+  collapseFolder();
+
+  const rect = hotspot.getBoundingClientRect();
+
+  // Backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'folder-backdrop';
+  backdrop.addEventListener('click', collapseFolder);
+  document.body.appendChild(backdrop);
+
+  // Wrapper
+  const exp = document.createElement('div');
+  exp.className = 'folder-expanded';
+  exp.id = 'folderExpanded';
+  exp.style.left   = rect.left   + 'px';
+  exp.style.top    = rect.top    + 'px';
+  exp.style.width  = rect.width  + 'px';
+  exp.style.height = rect.height + 'px';
+
+  // Cílová velikost = plocha obrázku kartotéky
+  const cabImg = document.querySelector('.cabinet-img');
+  const cabRect = cabImg ? cabImg.getBoundingClientRect() : rect;
+  const targetW = Math.round(cabRect.width  * 0.75);
+  const targetH = Math.round(cabRect.height * 0.72);
+
+  // SVG složka (v cílové velikosti)
+  exp.innerHTML = makeFolderSVG(t(data.title), targetW, targetH);
+
+  // Textový obsah přes SVG
+  const cnt = document.createElement('div');
+  cnt.className = 'folder-content';
+  cnt.style.cssText = `
+    position:absolute;
+    top:${Math.round(targetH * 0.14)}px;
+    left:${Math.round(targetW * 0.06)}px;
+    right:${Math.round(targetW * 0.06)}px;
+    bottom:${Math.round(targetH * 0.08)}px;
+    display:flex; flex-direction:column;
+    justify-content:flex-start; gap:0.6rem;
+    padding-top:0.5rem;
+    pointer-events:none;
+  `;
+
+  const descEl = document.createElement('div');
+  descEl.className = 'fc-desc';
+  descEl.textContent = t(data.desc);
+  cnt.appendChild(descEl);
+
+  const actWrap = document.createElement('div');
+  actWrap.style.pointerEvents = 'all';
+  if (data.action === 'download' && data.file) {
+    const a = document.createElement('a');
+    a.className='fc-btn'; a.href=data.file; a.download='';
+    a.textContent=t(data.btn); actWrap.appendChild(a);
+  } else if (data.action === 'open' && data.file) {
+    const a = document.createElement('a');
+    a.className='fc-btn'; a.href=data.file; a.target='_blank';
+    a.textContent=t(data.btn); actWrap.appendChild(a);
+  } else {
+    const s = document.createElement('div');
+    s.className='fc-soon';
+    s.textContent={cs:'PŘIPRAVUJE SE',en:'COMING SOON',de:'DEMNÄCHST'}[lang];
+    actWrap.appendChild(s);
+  }
+  cnt.appendChild(actWrap);
+  exp.appendChild(cnt);
+  document.body.appendChild(exp);
+
+  // Animace do středu
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    exp.style.left   = (cabRect.left + (cabRect.width  - targetW) / 2) + 'px';
+    exp.style.top    = (cabRect.top  + (cabRect.height - targetH) / 2) + 'px';
+    exp.style.width  = targetW + 'px';
+    exp.style.height = targetH + 'px';
+  }));
+
+  expandedEl = exp;
+}
+
+function collapseFolder() {
+  const exp = document.getElementById('folderExpanded');
+  const backdrop = document.querySelector('.folder-backdrop');
+  if (exp) {
+    exp.style.transition = 'all 0.25s ease';
+    exp.remove();
+  }
+  if (backdrop) backdrop.remove();
+  expandedEl = null;
+}
+
+/* Napojit kliknutí na všechny hotspoty */
+document.querySelectorAll('.hotspot').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const data = ITEMS[el.id] || SOON;
+    expandFolder(el, data);
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') collapseFolder();
+});
+
+/* Aktualizovat tooltipy */
+function updateTips() {
+  document.querySelectorAll('.hotspot').forEach(el => {
+    const data = ITEMS[el.id] || SOON;
+    const tipEl = el.querySelector('.tip');
+    if (tipEl && data.tip) tipEl.textContent = t(data.tip);
+  });
+}
+
+/* ── DETAIL PANEL ── */
+const panel = document.getElementById('detailPanel');
+
+function openDetail(data) {
+  document.getElementById('dpTitle').textContent = t(data.title);
+  document.getElementById('dpDesc').textContent  = t(data.desc);
+  const actions = document.getElementById('dpActions');
+  actions.innerHTML = '';
+  if (data.action === 'download' && data.file) {
+    const a = document.createElement('a');
+    a.className='dp-btn'; a.href=data.file; a.download='';
+    a.textContent=t(data.btn); actions.appendChild(a);
+  } else if (data.action === 'open' && data.file) {
+    const a = document.createElement('a');
+    a.className='dp-btn'; a.href=data.file; a.target='_blank';
+    a.textContent=t(data.btn); actions.appendChild(a);
+  } else {
+    const s = document.createElement('span');
+    s.className='dp-soon';
+    s.textContent={cs:'PŘIPRAVUJE SE',en:'COMING SOON',de:'DEMNÄCHST'}[lang];
+    actions.appendChild(s);
+  }
+  panel.classList.add('visible');
+}
+
+document.getElementById('dpClose').addEventListener('click', () => {
+  panel.classList.remove('visible');
+  collapseFolder();
+});
+
+/* ── JAZYK ── */
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent===l.toUpperCase())
+  );
+  updateTips();
+  panel.classList.remove('visible');
+}
+
+updateTips();
+
+/* ── SOUŘADNICOVÝ HELPER ── */
+const scene  = document.getElementById('scene');
+const coords = document.getElementById('coords');
+scene.addEventListener('mousemove', e => {
+  const r = scene.getBoundingClientRect();
+  const x = ((e.clientX-r.left)/r.width *100).toFixed(1);
+  const y = ((e.clientY-r.top) /r.height*100).toFixed(1);
+  coords.textContent = `x: ${x}% | y: ${y}%`;
+});
+</script>
+
+</body>
+</html>

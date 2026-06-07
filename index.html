@@ -269,7 +269,7 @@
   .door-overlay-plate {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-45%) translateY(30%);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -324,13 +324,8 @@
   .door-pro   .door-img-wrap ~ .door-light,
   .door-hosp  .door-img-wrap ~ .door-light { background: #d4a85a; }
 
-  /* ============================================================
-     +20% oproti původním hodnotám:
-       pro/hosp: bylo 110/14vw/240 → nyní 132/16.8vw/288
-       fantasy:  bylo 126/16vw/270 → nyní 151/19.2vw/324
-     ============================================================ */
 .door-pro    .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: auto; display: block; }
-.door-hosp   .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: clamp(220px, 26vw, 480px); display: block; object-fit: cover; object-position: center; }
+.door-hosp   .door-img-wrap img { width: clamp(132px, 16.8vw, 288px); height: clamp(230px, 28vw, 495px); display: block; object-fit: cover; object-position: center; }
 .door-fantasy .door-frame svg { width: clamp(132px, 16.8vw, 288px); height: auto; }
 
 
@@ -653,7 +648,7 @@
     document.documentElement.lang = lang;
   }
 
-  /* Spustíme češtinu jako výchozí jazyk */
+  /* výchozí jazyk */
   setLang('en');
 
 

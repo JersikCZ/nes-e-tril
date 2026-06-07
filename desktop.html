@@ -289,46 +289,48 @@ html, body {
 const STUDIES = [
 
   {
-    id:    'belimo',
+    id:    'Supplier_complaint',
     color: 'yellow',
-    pdf:   '#', /* doplň: 'studies/belimo.pdf' */
+    pdf:   '#', /* doplň: 'studies/supplier_complaint.pdf' */
     folder: {
-      cs: 'Belimo\nReklamace',
-      en: 'Belimo\nComplaint',
-      de: 'Belimo\nReklamation',
+      cs: 'SC\nReklamace',
+      en: 'SC\nComplaint',
+      de: 'SC\nReklamation',
     },
     title: {
-      cs: 'Belimo – Zákaznická reklamace',
-      en: 'Belimo – Customer Complaint Resolution',
-      de: 'Belimo – Kundenreklamation',
+      cs: 'Anixter – Dodavatelská reklamace',
+      en: 'Anixter – Supplier Complaint',
+      de: 'Anixter – Lieferantenreklamation',
     },
     subtitle: {
-      cs: 'ZÁKAZNICKÁ KVALITA / ŘEŠENÍ REKLAMACÍ',
-      en: 'CUSTOMER QUALITY / COMPLAINT RESOLUTION',
-      de: 'KUNDENQUALITÄT / REKLAMATIONSBEARBEITUNG',
+      cs: 'DODAVATELSKÁ KVALITA / ŘEŠENÍ REKLAMACÍ',
+      en: 'SUPPLIER QUALITY / COMPLAINT RESOLUTION',
+      de: 'LIEFERANTENQUALITÄT / REKLAMATIONSBEARBEITUNG',
     },
     problem: {
-      cs: 'Opakující se zákaznické reklamace od Belimo týkající se rozměrové neshody na krimpovaných konektorech. Zákazník požadoval okamžitou nápravnou akci a preventivní opatření v rámci 8D metodiky.',
-      en: 'Recurring customer complaints from Belimo regarding dimensional non-conformities on crimped connectors. The customer demanded immediate corrective action and preventive measures within the 8D methodology framework.',
-      de: 'Wiederkehrende Kundenreklamationen von Belimo bezüglich Maßabweichungen an gecrimpteten Steckverbindern. Der Kunde forderte sofortige Korrekturmaßnahmen und Präventivmaßnahmen im Rahmen der 8D-Methodik.',
+      cs: 'Vnější průměr vodiče neodpovídal požadavkům zákazníka (datovému listu), tvořil balónový efekt na vodiči.',
+      en: 'The conductor\'s outer diameter did not meet the customer\'s specifications (as listed in the data sheet), causing a balloon effect on the conductor.',
+      de: 'Der Außendurchmesser des Leiters entsprach nicht den Anforderungen des Kunden (Datenblatt) und führte zu einer Aufblähung des Leiters.',
     },
     solution: {
-      cs: 'Analýza kořenové příčiny pomocí Ishikawa diagramu a 5x Proč. Zavedení 100% vizuální kontroly na výstupu, revize pracovní instrukce, přeškolení operátorů. Implementace nového měřicího postupu pro krimpovací sílu.',
-      en: 'Root cause analysis using Ishikawa diagram and 5 Whys. Implementation of 100% visual inspection at output, revision of work instructions, retraining of operators. Introduction of a new measurement procedure for crimping force.',
-      de: 'Ursachenanalyse mittels Ishikawa-Diagramm und 5-Warum-Methode. Einführung einer 100%-Sichtprüfung am Ausgang, Überarbeitung der Arbeitsanweisung, Nachschulung der Bediener. Implementierung eines neuen Messverfahrens für die Crimpkraft.',
+      cs: 'Detekce této neshody nebyla v naší výrobě nijak zavedená. Postup v logických krocích tak, abychom ochránili zákazníka. Po informování zákazníka byla neshoda potvrzena i u něj (následovala zákaznická reklamce). \nV prvním kroku jsme zabezpečili výrobní proces zavedením mechanické bariéry na stříhacím stroji. V silikonovém bloku jsme vyvrtali otvor s maximálním povoleným průměrem. To zabezpečilo automatickou detekci před vstupem materiálu do samotného zpracování. Bylo provedeno vyhodnocení ohrožení stříhacího stroje (mechanickým zastavením vstupu vodiče) - riziko poškození stroje bylo vyhodnoceno jako minimální. \nBylo nutné vyžádat také speciální uvolnění ze strany zákazníka na vyšší průměr - vzhledem ke zmetkovitosti na vstupním materiálu.\nAnalýza kořenové příčiny pomocí Ishikawa diagramu. Zavedení 100% vizuální kontroly na vstupu, revize pracovní instrukce, přeškolení operátorů. Implementace nového měřicího postupu pro krimpovací sílu.',
+
+      en: 'Detection of this nonconformity had not been implemented in our production process. We followed a step-by-step procedure to protect the customer. After informing the customer, the nonconformity was confirmed on their end as well (followed by a customer complaint).\nIn the first step, we secured the production process by installing a mechanical barrier on the cutting machine. We drilled a hole in the silicone block with the maximum permitted diameter. This ensured automatic detection before the material entered the processing stage. A risk assessment of the cutting machine was conducted (involving a mechanical stop for the wire feed)—the risk of machine damage was assessed as minimal. \nIt was also necessary to request special approval from the customer for a larger diameter—due to the defect rate in the input material.\nRoot cause analysis using an Ishikawa diagram. Implementation of 100% visual inspection at the input stage, revision of work instructions, and retraining of operators. Implementation of a new measurement procedure for crimping force.',
+
+      de: 'Die Erkennung dieser Abweichung war in unserer Produktion noch nicht etabliert. Wir gingen in logischen Schritten vor, um den Kunden zu schützen. Nach der Benachrichtigung des Kunden wurde die Abweichung auch bei ihm bestätigt (es folgte eine Kundenreklamation).\nIm ersten Schritt sicherten wir den Produktionsprozess durch die Einführung einer mechanischen Barriere an der Schneidemaschine. Wir bohrten ein Loch mit dem maximal zulässigen Durchmesser in den Silikonblock. Dies stellte eine automatische Erkennung sicher, bevor das Material in den eigentlichen Verarbeitungsprozess gelangte. Es wurde eine Risikobewertung für die Schneidemaschine durchgeführt (durch mechanisches Stoppen des Kabeleingangs) – das Risiko einer Beschädigung der Maschine wurde als minimal eingestuft. \nEs war außerdem erforderlich, vom Kunden eine Sondergenehmigung für einen größeren Durchmesser einzuholen – aufgrund der Ausschussquote beim Eingangsmaterial.\nUrsachenanalyse mittels Ishikawa-Diagramm. Einführung einer 100-prozentigen Sichtprüfung am Eingang, Überarbeitung der Arbeitsanweisungen, Nachschulung der Bediener. Implementierung eines neuen Messverfahrens für die Crimpkraft.',
     },
     result: {
       cs: 'Nulová opakovaná reklamace v následujících 12 měsících. Zákazník uzavřel 8D report s hodnocením "satisfactory". Snížení interního zmetkovitosti o 60 %.',
       en: 'Zero repeat complaints in the following 12 months. Customer closed the 8D report with a "satisfactory" rating. Internal scrap rate reduced by 60%.',
       de: 'Keine Wiederholungsreklamation in den folgenden 12 Monaten. Der Kunde schloss den 8D-Bericht mit der Bewertung „satisfactory" ab. Interne Ausschussrate um 60 % gesenkt.',
     },
-    tags: ['8D', 'Ishikawa', 'Crimping', 'PPAP', 'Belimo'],
+    tags: ['8D', 'Ishikawa', 'Material Management', 'PPAP',],
     metrics: [
       {
         label: { cs: 'Opakované reklamace',   en: 'Repeat complaints',      de: 'Wiederholungsreklamationen' },
-        value: '0',
+        value: '4',
         unit:  { cs: 'za 12 měsíců',          en: 'in 12 months',           de: 'in 12 Monaten' },
-        color: 'green',
+        color: 'red',
       },
       {
         label: { cs: 'Snížení zmetkovitosti', en: 'Scrap rate reduction',   de: 'Ausschussreduktion' },
@@ -344,6 +346,8 @@ const STUDIES = [
       },
     ],
   },
+
+/* druhá složka - popsání rozvoje sledování kvality v Engeser USA */
 
   {
     id:    'engeser',
