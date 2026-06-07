@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defect Tracker – Engeser USA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#f5f0e8;color:#2c2c2c;min-height:100vh}
+  .topbar{background:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #c8001e;box-shadow:0 2px 6px #0000000d}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-square{width:36px;height:36px;background:#c8001e;border-radius:4px;flex-shrink:0}
+  .logo-text{line-height:1.1}
+  .logo-text .brand{font-size:17px;font-weight:800;color:#c8001e;letter-spacing:.5px}
+  .logo-text .sub{font-size:10px;color:#888;letter-spacing:1.5px;text-transform:uppercase}
+  .topbar-right{text-align:right}
+  .topbar-right .date-val{font-size:14px;font-weight:600;color:#2c2c2c}
+  .topbar-right .week-val{font-size:11px;color:#888;margin-top:1px}
+  .tabs{display:flex;background:#fff;border-bottom:1px solid #ddd}
+  .tab{flex:1;padding:13px 6px;text-align:center;font-size:13px;font-weight:500;color:#888;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+  .tab.active{color:#c8001e;border-bottom-color:#c8001e}
+  .tab:hover:not(.active){color:#444;background:#faf8f4}
+  .section{display:none;padding:14px;max-width:100%}
+  .section.active{display:block}
+  .card{background:#fff;border:1px solid #e0d8cc;border-radius:10px;padding:15px;margin-bottom:12px;box-shadow:0 1px 4px #0000000a}
+  .card h3{font-size:12px;font-weight:700;color:#c8001e;margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  label{font-size:12px;color:#666;display:block;margin-bottom:4px;font-weight:500}
+  select,input[type=number],input[type=text],input[type=date]{width:100%;padding:10px 12px;background:#faf8f4;border:1px solid #d0c8bc;border-radius:8px;color:#2c2c2c;font-size:15px;-webkit-appearance:none;appearance:none}
+  select:focus,input:focus{outline:none;border-color:#c8001e;background:#fff}
+  select option{background:#fff;color:#2c2c2c}
+  .btn{padding:12px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+  .btn-primary{background:#c8001e;color:#fff;width:100%}
+  .btn-primary:hover{background:#a80018}
+  .btn-primary:active{transform:scale(.98)}
+  .btn-danger{background:#fff0f0;color:#c8001e;border:1px solid #f0b0b0}
+  .btn-danger:hover{background:#c8001e;color:#fff}
+  .btn-sm{padding:6px 12px;font-size:12px}
+  .btn-outline{background:#fff;border:1.5px solid #c8001e;color:#c8001e}
+  .btn-outline:hover{background:#c8001e;color:#fff}
+  .record-list{max-height:420px;overflow-y:auto}
+  .record{display:grid;grid-template-columns:1fr auto;align-items:center;padding:10px 12px;background:#faf8f4;border:1px solid #e8e0d4;border-radius:8px;margin-bottom:6px;gap:8px}
+  .record-info{font-size:13px;line-height:1.6}
+  .record-info strong{color:#c8001e;font-size:14px}
+  .record-info .meta{color:#888;font-size:11px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:#ffeaea;color:#c8001e;border:1px solid #f0b0b0}
+  .chart-container{position:relative;height:280px;margin:8px 0}
+  .week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .week-nav button{background:#fff;border:1px solid #d0c8bc;color:#444;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  .week-nav button:hover{border-color:#c8001e;color:#c8001e}
+  .week-label{font-size:13px;color:#c8001e;font-weight:700}
+  .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .tag{background:#faf8f4;border:1px solid #d0c8bc;color:#2c2c2c;padding:5px 10px;border-radius:20px;font-size:13px;display:flex;align-items:center;gap:6px}
+  .tag-del{cursor:pointer;color:#c8001e;font-size:18px;line-height:1;font-weight:300}
+  .tag-del:hover{color:#a80018}
+  .add-row{display:flex;gap:8px;margin-bottom:6px}
+  .add-row input{flex:1}
+  .add-row button{padding:10px 14px;background:#fff;border:1.5px solid #c8001e;color:#c8001e;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap;font-weight:600}
+  .add-row button:hover{background:#c8001e;color:#fff}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .stat{background:#fff;border:1px solid #e0d8cc;border-radius:8px;padding:12px;text-align:center;box-shadow:0 1px 3px #0000000a}
+  .stat .val{font-size:26px;font-weight:800;color:#c8001e}
+  .stat .lbl{font-size:10px;color:#999;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+  .empty{text-align:center;padding:30px;color:#bbb;font-size:13px}
+  .confirm-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0005;z-index:100;align-items:center;justify-content:center}
+  .confirm-overlay.show{display:flex}
+  .confirm-box{background:#fff;border:2px solid #c8001e;border-radius:12px;padding:24px;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 32px #0000002a}
+  .confirm-box h3{color:#c8001e;margin-bottom:10px;font-size:16px}
+  .confirm-box p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.5}
+  .confirm-btns{display:flex;gap:10px}
+  .confirm-btns .btn{flex:1}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2c2c2c;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;border-left:4px solid #c8001e}
+  .toast.show{opacity:1}
+  .shift-info{background:#ffeaea;border:1px solid #f0b0b0;border-radius:8px;padding:9px 14px;font-size:13px;color:#c8001e;font-weight:600;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-square"></div>
+    <div class="logo-text">
+      <div class="brand">ENGESER USA</div>
+      <div class="sub">Defect Tracker</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="date-val" id="todayDate"></div>
+    <div class="week-val" id="todayWeek"></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('entry',this)">📝 Entry</div>
+  <div class="tab" onclick="showTab('history',this)">📋 History</div>
+  <div class="tab" onclick="showTab('charts',this)">📊 Charts</div>
+  <div class="tab" onclick="showTab('settings',this)">⚙️ Settings</div>
+</div>
+
+<div id="tab-entry" class="section active">
+  <div class="card">
+    <h3>New Record</h3>
+    <div class="form-row">
+      <div>
+        <label>Date</label>
+        <input type="date" id="entryDate">
+      </div>
+      <div>
+        <label>Shift</label>
+        <div class="shift-info">🌅 Morning shift</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Operator</label>
+        <select id="entryWorker"><option value="">— select —</option></select>
+      </div>
+      <div>
+        <label>Workstation</label>
+        <input type="text" id="entryWorkplace" placeholder="e.g. Line A3">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Defect type</label>
+        <select id="entryDefect"><option value="">— select —</option></select>
+      </div>
+      <div>
+        <label>Defect count</label>
+        <input type="number" id="entryCount" min="1" value="1">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveEntry()" style="margin-top:6px">✓ SAVE RECORD</button>
+  </div>
+</div>
+
+<div id="tab-history" class="section">
+  <div class="stats-row">
+    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Total</div></div>
+    <div class="stat"><div class="val" id="statToday">0</div><div class="lbl">Today</div></div>
+    <div class="stat"><div class="val" id="statWeek">0</div><div class="lbl">This week</div></div>
+  </div>
+  <div class="card">
+    <h3>Records</h3>
+    <div class="record-list" id="recordList"></div>
+  </div>
+  <button class="btn btn-danger btn-sm" onclick="confirmClear()" style="width:100%;margin-top:6px">🗑 Delete all records (weekly reset)</button>
+</div>
+
+<div id="tab-charts" class="section">
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">◀ Previous</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button onclick="changeWeek(1)">Next ▶</button>
+  </div>
+  <div class="card">
+    <h3>Defects by day</h3>
+    <div class="chart-container"><canvas id="chartDaily"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Defects by operator</h3>
+    <div class="chart-container"><canvas id="chartWorker"></canvas></div>
+  </div>
+  <button class="btn btn-outline" onclick="exportPDF()" style="width:100%;margin-top:4px">📄 Export to PDF</button>
+</div>
+
+<div id="tab-settings" class="section">
+  <div class="card">
+    <h3>👷 Operators</h3>
+    <div class="tag-list" id="workerTags"></div>
+    <div class="add-row">
+      <input type="text" id="newWorker" placeholder="Operator name..." onkeydown="if(event.key==='Enter')addWorker()">
+      <button onclick="addWorker()">+ Add</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>⚠️ Defect types</h3>
+    <div class="tag-list" id="defectTags"></div>
+    <div class="add-row">
+      <input type="text" id="newDefect" placeholder="Defect name..." onkeydown="if(event.key==='Enter')addDefect()">
+      <button onclick="addDefect()">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>⚠️ Weekly reset</h3>
+    <p>Delete all records?<br>This action cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-danger" onclick="clearAll()">Delete all</button>
+      <button class="btn btn-outline" onclick="document.getElementById('confirmOverlay').classList.remove('show')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let chartDaily=null,chartWorker=null,currentWeekOffset=0;
+
+const S={w:'dt_workers',d:'dt_defects',e:'dt_entries'};
+function load(k,def){try{return JSON.parse(localStorage.getItem(k))||def}catch{return def}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+let workers=load(S.w,['John Smith','Mary Johnson','Mike Davis']);
+let defects=load(S.d,['Dimensional deviation','Surface defect','Wrong label','Missing part','Assembly error']);
+let entries=load(S.e,[]);
+
+function getWeekNumber(d){
+  const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNum=date.getUTCDay()||7;
+  date.setUTCDate(date.getUTCDate()+4-dayNum);
+  const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date-yearStart)/86400000)+1)/7);
+}
+
+function init(){
+  const d=new Date();
+  document.getElementById('todayDate').textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'2-digit',year:'numeric'});
+  document.getElementById('todayWeek').textContent='Week '+getWeekNumber(d);
+  document.getElementById('entryDate').value=d.toISOString().split('T')[0];
+  refreshDropdowns();refreshWorkerTags();refreshDefectTags();refreshHistory();setWeekLabel();
+}
+
+function showTab(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='charts')renderCharts();
+}
+
+function refreshDropdowns(){
+  const ws=document.getElementById('entryWorker');
+  const ds=document.getElementById('entryDefect');
+  const wv=ws.value,dv=ds.value;
+  ws.innerHTML='<option value="">— select —</option>'+workers.map(w=>`<option value="${w}"${w===wv?' selected':''}>${w}</option>`).join('');
+  ds.innerHTML='<option value="">— select —</option>'+defects.map(d=>`<option value="${d}"${d===dv?' selected':''}>${d}</option>`).join('');
+}
+
+function refreshWorkerTags(){
+  document.getElementById('workerTags').innerHTML=workers.map((w,i)=>`<div class="tag">${w}<span class="tag-del" onclick="removeWorker(${i})">×</span></div>`).join('')||'<span style="color:#bbb;font-size:13px">No operators</span>';
+}
+
+function refreshDefectTags(){
+  document.getElementById('defectTags').innerHTML=defects.map((d,i)=>`<div class="tag">${d}<span class="tag-del" onclick="removeDefect(${i})">×</span></div>`).join('')||'<span style="color:#bbb;font-size:13px">No defect types</span>';
+}
+
+function addWorker(){
+  const inp=document.getElementById('newWorker');
+  const v=inp.value.trim();
+  if(!v)return;
+  if(workers.includes(v)){toast('Operator already exists');return}
+  workers.push(v);save(S.w,workers);inp.value='';
+  refreshWorkerTags();refreshDropdowns();toast('Operator added ✓');
+}
+function removeWorker(i){workers.splice(i,1);save(S.w,workers);refreshWorkerTags();refreshDropdowns();}
+
+function addDefect(){
+  const inp=document.getElementById('newDefect');
+  const v=inp.value.trim();
+  if(!v)return;
+  if(defects.includes(v)){toast('Defect type already exists');return}
+  defects.push(v);save(S.d,defects);inp.value='';
+  refreshDefectTags();refreshDropdowns();toast('Defect type added ✓');
+}
+function removeDefect(i){defects.splice(i,1);save(S.d,defects);refreshDefectTags();refreshDropdowns();}
+
+function saveEntry(){
+  const date=document.getElementById('entryDate').value;
+  const worker=document.getElementById('entryWorker').value;
+  const workplace=document.getElementById('entryWorkplace').value.trim();
+  const defect=document.getElementById('entryDefect').value;
+  const count=parseInt(document.getElementById('entryCount').value)||0;
+  if(!date||!worker||!workplace||!defect||count<1){toast('⚠️ Please fill in all fields');return}
+  entries.push({id:Date.now(),date,worker,workplace,defect,count});
+  save(S.e,entries);
+  document.getElementById('entryCount').value=1;
+  document.getElementById('entryWorkplace').value='';
+  document.getElementById('entryWorker').value='';
+  document.getElementById('entryDefect').value='';
+  refreshHistory();toast('Record saved ✓');
+}
+
+function getWeekStart(d){
+  const day=d.getDay();
+  const diff=d.getDate()-(day===0?6:day-1);
+  const mon=new Date(d);mon.setDate(diff);mon.setHours(0,0,0,0);return mon;
+}
+
+function refreshHistory(){
+  const today=new Date().toISOString().split('T')[0];
+  const ws=getWeekStart(new Date());
+  const we=new Date(ws);we.setDate(we.getDate()+6);
+  const wss=ws.toISOString().split('T')[0];
+  const wes=we.toISOString().split('T')[0];
+  let total=0,todayC=0,weekC=0;
+  entries.forEach(e=>{total+=e.count;if(e.date===today)todayC+=e.count;if(e.date>=wss&&e.date<=wes)weekC+=e.count;});
+  document.getElementById('statTotal').textContent=total;
+  document.getElementById('statToday').textContent=todayC;
+  document.getElementById('statWeek').textContent=weekC;
+  const sorted=[...entries].sort((a,b)=>b.id-a.id);
+  document.getElementById('recordList').innerHTML=sorted.length===0
+    ?'<div class="empty">No records yet</div>'
+    :sorted.map(e=>`
+      <div class="record">
+        <div class="record-info">
+          <strong>${e.defect}</strong> <span class="badge">${e.count}×</span><br>
+          <span class="meta">👷 ${e.worker} &nbsp;|&nbsp; 🏭 ${e.workplace}</span><br>
+          <span class="meta">📅 ${e.date}</span>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button>
+      </div>`).join('');
+}
+
+function deleteEntry(id){entries=entries.filter(e=>e.id!==id);save(S.e,entries);refreshHistory();toast('Deleted');}
+function confirmClear(){document.getElementById('confirmOverlay').classList.add('show')}
+function clearAll(){entries=[];save(S.e,entries);document.getElementById('confirmOverlay').classList.remove('show');refreshHistory();toast('All records deleted');}
+
+function setWeekLabel(){
+  const base=new Date();base.setDate(base.getDate()+currentWeekOffset*7);
+  const ws=getWeekStart(base);
+  const we=new Date(ws);we.setDate(we.getDate()+6);
+  const fmt=d=>d.toLocaleDateString('en-US',{month:'short',day:'2-digit'});
+  const wn=getWeekNumber(ws);
+  document.getElementById('weekLabel').textContent=`Week ${wn}  •  ${fmt(ws)} – ${fmt(we)}`;
+}
+
+function changeWeek(dir){currentWeekOffset+=dir;setWeekLabel();renderCharts();}
+
+function getWeekEntries(){
+  const base=new Date();base.setDate(base.getDate()+currentWeekOffset*7);
+  const ws=getWeekStart(base);const we=new Date(ws);we.setDate(we.getDate()+6);
+  const s=ws.toISOString().split('T')[0];const e=we.toISOString().split('T')[0];
+  return entries.filter(x=>x.date>=s&&x.date<=e);
+}
+
+function renderCharts(){
+  const we=getWeekEntries();
+  const base=new Date();base.setDate(base.getDate()+currentWeekOffset*7);
+  const ws=getWeekStart(base);
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dailyCounts=days.map((_,i)=>{
+    const d=new Date(ws);d.setDate(d.getDate()+i);
+    const ds=d.toISOString().split('T')[0];
+    return we.filter(e=>e.date===ds).reduce((a,e)=>a+e.count,0);
+  });
+  const workerMap={};
+  we.forEach(e=>{workerMap[e.worker]=(workerMap[e.worker]||0)+e.count});
+  const wLabels=Object.keys(workerMap);
+  const wData=wLabels.map(w=>workerMap[w]);
+  const red='#c8001e';
+  const colors=['#c8001e','#2563eb','#059669','#d97706','#7c3aed','#0891b2','#dc2626'];
+  if(chartDaily)chartDaily.destroy();
+  chartDaily=new Chart(document.getElementById('chartDaily'),{
+    type:'bar',
+    data:{labels:days,datasets:[{label:'Defect count',data:dailyCounts,backgroundColor:red+'33',borderColor:red,borderWidth:2,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#555'}}},scales:{x:{ticks:{color:'#666'},grid:{color:'#00000008'}},y:{ticks:{color:'#666',stepSize:1},grid:{color:'#0000000d'},beginAtZero:true}}}
+  });
+  if(chartWorker)chartWorker.destroy();
+  if(wLabels.length===0){document.getElementById('chartWorker').getContext('2d').clearRect(0,0,300,300);return;}
+  chartWorker=new Chart(document.getElementById('chartWorker'),{
+    type:'bar',
+    data:{labels:wLabels,datasets:[{label:'Defects',data:wData,backgroundColor:wLabels.map((_,i)=>colors[i%colors.length]+'44'),borderColor:wLabels.map((_,i)=>colors[i%colors.length]),borderWidth:2,borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#666',stepSize:1},grid:{color:'#0000000d'},beginAtZero:true},y:{ticks:{color:'#333'},grid:{color:'#00000008'}}}}
+  });
+}
+
+async function exportPDF(){
+  toast('Generating PDF...');
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const base=new Date();base.setDate(base.getDate()+currentWeekOffset*7);
+  const ws=getWeekStart(base);const we=new Date(ws);we.setDate(we.getDate()+6);
+  const fmt=d=>d.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
+  const wn=getWeekNumber(ws);
+  doc.setFillColor(200,0,30);doc.rect(14,10,8,8,'F');
+  doc.setFontSize(16);doc.setTextColor(200,0,30);doc.setFont(undefined,'bold');
+  doc.text('ENGESER USA',26,17);
+  doc.setFontSize(10);doc.setTextColor(120,120,120);doc.setFont(undefined,'normal');
+  doc.text('Defect Tracker – Weekly Report',26,22);
+  doc.setDrawColor(200,0,30);doc.setLineWidth(0.5);doc.line(14,26,196,26);
+  doc.setFontSize(10);doc.setTextColor(80,80,80);
+  doc.text(`Week ${wn}  |  ${fmt(ws)} – ${fmt(we)}`,14,33);
+  doc.text(`Generated: ${new Date().toLocaleString('en-US')}`,14,39);
+  const weekEntries=getWeekEntries();
+  const total=weekEntries.reduce((a,e)=>a+e.count,0);
+  doc.setFontSize(12);doc.setTextColor(200,0,30);doc.setFont(undefined,'bold');
+  doc.text(`Total defects this week: ${total}`,14,50);
+  doc.setFont(undefined,'normal');
+  doc.setFontSize(9);doc.setTextColor(100,100,100);
+  let y=60;
+  doc.setFillColor(245,240,232);doc.rect(14,y-5,182,7,'F');
+  doc.setTextColor(80,80,80);doc.setFont(undefined,'bold');
+  doc.text('Date',15,y);doc.text('Operator',45,y);doc.text('Workstation',90,y);doc.text('Defect type',130,y);doc.text('Count',186,y,'right');
+  doc.setFont(undefined,'normal');y+=2;
+  doc.setDrawColor(200,0,30);doc.line(14,y,196,y);y+=5;
+  doc.setTextColor(50,50,50);
+  weekEntries.sort((a,b)=>a.date.localeCompare(b.date)).forEach((e,idx)=>{
+    if(y>270){doc.addPage();y=20}
+    if(idx%2===0){doc.setFillColor(250,248,244);doc.rect(14,y-4,182,6,'F')}
+    doc.text(e.date,15,y);
+    doc.text((e.worker||'').substring(0,20),45,y);
+    doc.text((e.workplace||'').substring(0,18),90,y);
+    doc.text((e.defect||'').substring(0,22),130,y);
+    doc.text(String(e.count),186,y,'right');
+    y+=6;
+  });
+  const c1=document.getElementById('chartDaily');
+  const c2=document.getElementById('chartWorker');
+  try{
+    const img1=await html2canvas(c1,{backgroundColor:'#ffffff',scale:1.5});
+    doc.addPage();
+    doc.setFillColor(200,0,30);doc.rect(14,10,8,8,'F');
+    doc.setFontSize(14);doc.setTextColor(200,0,30);doc.setFont(undefined,'bold');
+    doc.text('ENGESER USA – Charts',26,17);
+    doc.setDrawColor(200,0,30);doc.line(14,22,196,22);
+    doc.setFontSize(11);doc.setTextColor(80,80,80);doc.setFont(undefined,'normal');
+    doc.text(`Defects by day – Week ${wn}`,14,32);
+    doc.addImage(img1.toDataURL('image/jpeg',0.9),'JPEG',14,36,182,78);
+    const img2=await html2canvas(c2,{backgroundColor:'#ffffff',scale:1.5});
+    doc.text(`Defects by operator – Week ${wn}`,14,124);
+    doc.addImage(img2.toDataURL('image/jpeg',0.9),'JPEG',14,128,182,78);
+  }catch(err){console.warn('Chart export failed',err)}
+  doc.save(`engeser_defects_w${wn}_${ws.toISOString().split('T')[0]}.pdf`);
+  toast('PDF downloaded ✓');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+init();
+</script>
+</body>
+</html>

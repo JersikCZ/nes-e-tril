@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hourly Checklist</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ============================================================
+     GLOBAL STYLES
+     Zde se nastavuje vzhled celého formuláře:
+     barvy, písmo, velikosti okrajů atd.
+     ============================================================ -->
+<style>
+  :root {
+    --red:          #C8102E;
+    --black:        #111111;
+    --grey-dark:    #2a2a2a;
+    --grey-mid:     #666;
+    --grey-light:   #ddd;
+    --grey-bg:      #e8e8e8;
+    --white:        #ffffff;
+    --border:       1.5px solid #222;
+    --border-light: 1px solid #bbb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;   /* ← hlavní písmo */
+    background: var(--grey-bg);
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+    color: var(--black);
+  }
+
+  /* ── Bílý "papír" uprostřed stránky ── */
+  .page {
+    max-width: 740px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 2px solid var(--black);
+    box-shadow: 5px 5px 0 #999;
+  }
+
+
+  /* ============================================================
+     HLAVIČKA (Date | Nadpis | Logo)
+     ============================================================ */
+  .header {
+    display: grid;
+    grid-template-columns: 90px 1fr 120px;
+    border-bottom: var(--border);
+    min-height: 54px;
+  }
+
+  /* Pole s datumem vlevo */
+  .header-date {
+    padding: 8px 10px;
+    border-right: var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+  }
+  .header-date label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--grey-mid);
+  }
+  .header-date input[type="date"] {
+    font-family: Arial, monospace;
+    font-size: 11px;
+    border: none;
+    outline: none;
+    width: 100%;
+    color: var(--black);
+    background: transparent;
+  }
+
+  /* Nadpis uprostřed */
+  .header-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+  .header-title h1 {
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--black);
+  }
+
+  /* Logo vpravo */
+  .header-logo {
+    border-left: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+  }
+  .header-logo img {
+    max-height: 44px;
+    max-width: 108px;
+    object-fit: contain;
+  }
+
+
+  /* ============================================================
+     INFORMAČNÍ BLOKY (instrukce, osoby, upozornění)
+     ============================================================ */
+  .info-block {
+    padding: 10px 14px;
+    border-bottom: var(--border-light);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--grey-dark);
+    text-align: center;
+  }
+
+  /* Červené upozornění */
+  .info-block.notice {
+    color: var(--red);
+    font-weight: 600;
+    font-size: 11.5px;
+    border-bottom: var(--border);
+  }
+
+  /* Řádek se jmény osob */
+  .personnel-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    margin-top: 6px;
+    justify-content: center;
+  }
+  .person-slot { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+  .person-slot .num { font-weight: 700; }
+  .person-slot input {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    border: none;
+    border-bottom: 1.5px solid var(--grey-light);
+    outline: none;
+    padding: 1px 3px;
+    width: 88px;
+    background: transparent;
+    color: var(--black);
+    transition: border-color .2s;
+  }
+  .person-slot input:focus { border-bottom-color: var(--red); }
+
+
+  /* ============================================================
+     TABULKA (Hours | Initials | Comments)
+     ============================================================ */
+  .check-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* Záhlaví tabulky */
+  .check-table thead th {
+    background: var(--white);
+    color: var(--black);
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 7px 8px;
+    text-align: center;
+    border: var(--border-light);
+    border-top: var(--border);
+  }
+  .check-table thead th.col-hours-h    { width: 108px; }
+  .check-table thead th.col-initials-h { width: 88px;  }
+
+  /* Řádky tabulky – sudé mají světlejší pozadí */
+  .check-table tbody tr { border-bottom: var(--border-light); }
+  .check-table tbody tr:last-child { border-bottom: none; }
+  .check-table tbody tr:nth-child(even) td { background: #fafafa; }
+
+  /* Sloupec Hours */
+  .col-hours {
+    width: 108px;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-weight: 700;
+    border-right: var(--border-light);
+    border-left:  var(--border-light);
+    vertical-align: middle;
+    text-align: center;
+  }
+  .time-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 4px;
+    gap: 1px;
+  }
+  .t1 { font-size: 13px; font-weight: 700; }
+  .t2 { font-size: 12px; font-weight: 400; }
+
+  /* Sloupec Initials */
+  .col-initials {
+    width: 88px;
+    border-right: var(--border-light);
+    padding: 4px;
+    vertical-align: middle;
+    text-align: center;
+  }
+  .col-initials input {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--black);
+    padding: 4px 0;
+  }
+
+  /* Sloupec Comments */
+  .col-comments {
+    padding: 4px 8px;
+    vertical-align: middle;
+    border-right: var(--border-light);
+  }
+  .col-comments textarea {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    color: var(--black);
+    line-height: 1.5;
+    min-height: 40px;
+    padding: 4px 0;
+  }
+
+
+  /* ============================================================
+     NOTES (pole pro volné poznámky pod tabulkou)
+     ============================================================ */
+  .notes-block {
+    border-top: var(--border);
+    padding: 6px 12px 4px;
+  }
+  .notes-block label {
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .notes-block textarea {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    color: var(--black);
+    line-height: 1.6;
+    padding: 2px 0;
+  }
+
+
+  /* ============================================================
+     PATIČKA FORMULÁŘE (Form-Index | upozornění | datum)
+     ============================================================ */
+  .form-footer {
+    border-top: var(--border);
+    display: grid;
+    grid-template-columns: 130px 1fr 100px;
+  }
+  .form-footer .fc {
+    padding: 5px 8px;
+    font-size: 10px;
+    font-family: Arial, monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .form-footer .fc:nth-child(1) { border-right: var(--border-light); justify-content: flex-start; font-weight: 700; }
+  .form-footer .fc:nth-child(3) { border-left:  var(--border-light); font-weight: 700; }
+
+
+  /* ============================================================
+     TLAČÍTKA (Export PDF / Clear Form)
+     ============================================================ */
+  .actions {
+    padding: 14px 16px;
+    display: flex;
+    gap: 10px;
+    border-top: var(--border);
+    background: var(--grey-bg);
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 9px 18px;
+    border: var(--border);
+    cursor: pointer;
+    transition: all .15s;
+    outline: none;
+  }
+  .btn-primary   { background: var(--red); color: white; box-shadow: 3px 3px 0 var(--black); }
+  .btn-primary:hover  { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--black); }
+  .btn-primary:active { transform: translate(2px,2px);   box-shadow: 1px 1px 0 var(--black); }
+  .btn-secondary { background: white; color: var(--black); box-shadow: 3px 3px 0 var(--black); }
+  .btn-secondary:hover  { background: #eee; transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--black); }
+  .btn-secondary:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--black); }
+
+
+  /* ============================================================
+     RESPONZIVITA (mobilní zobrazení)
+     ============================================================ */
+  @media (max-width: 480px) {
+    body { padding: 8px 6px 60px; }
+    .header { grid-template-columns: 76px 1fr 96px; }
+    .header-title h1 { font-size: 15px; }
+    .col-hours, .check-table thead th.col-hours-h    { width: 82px; }
+    .col-initials, .check-table thead th.col-initials-h { width: 68px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============================================================
+       HLAVIČKA
+       Zde změň: nadpis, URL loga
+       ============================================================ -->
+  <div class="header">
+
+    <!-- Datum (vyplní se automaticky na dnešek) -->
+    <div class="header-date">
+      <label>Date</label>
+      <input type="date" id="checkDate">
+    </div>
+
+    <!-- Nadpis formuláře -->
+    <div class="header-title">
+      <h1>Hourly-check</h1>
+    </div>
+
+    <!-- Logo společnosti: změň src="..." na odkaz na svůj obrázek -->
+    <div class="header-logo">
+      <img id="logoImg"
+           src="https://engeser-usa.com/wp-content/uploads/2022/03/Logo_ENGESER_USA-1-300x88.jpg"
+           alt="Company Logo">
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       INSTRUKCE
+       Zde změň text instrukce pokud bude potřeba
+       ============================================================ -->
+  <div class="info-block">
+    Every work-station that is working on production line is to be checked.
+    If there is any questions please ask the supervisor right away.
+  </div>
+
+
+  <!-- ============================================================
+       SEZNAM OSOB
+       Zde změň předvyplněná jména (value="...")
+       ============================================================ -->
+  <div class="info-block">
+    The following people have to do hourly checks. If the person listed as no.1 is not present,
+    it falls to the next person on the list to perform the checks and so on.
+    <div class="personnel-row">
+      <div class="person-slot"><span class="num">No.1 :</span><input type="text" id="p1" value="Suzette"></div>
+      <div class="person-slot"><span class="num">No.2 :</span><input type="text" id="p2" value="Vladimir"></div>
+      <div class="person-slot"><span class="num">No.3 :</span><input type="text" id="p3" value="John W."></div>
+      <div class="person-slot"><span class="num">No.4 :</span><input type="text" id="p4" placeholder="________"></div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       UPOZORNĚNÍ (červený řádek)
+       Zde změň text upozornění
+       ============================================================ -->
+  <div class="info-block notice">
+    By the end of each day, this form has to be signed and saved as PDF and upload to the ENGESER CLOUD.
+  </div>
+
+
+  <!-- ============================================================
+       TABULKA KONTROLY
+       Časové sloty se generují automaticky ze JS sekce SLOTS níže
+       ============================================================ -->
+  <table class="check-table">
+    <thead>
+      <tr>
+        <th class="col-hours-h">Hours</th>
+        <th class="col-initials-h">Check done by<br>(Initials)</th>
+        <th>Comments (Issues found/special remarks)</th>
+      </tr>
+    </thead>
+    <tbody id="checkRows"></tbody>
+  </table>
+
+
+  <!-- ============================================================
+       POZNÁMKY
+       Volné textové pole pod tabulkou
+       ============================================================ -->
+  <div class="notes-block">
+    <label>Notes:</label>
+    <textarea id="notesField"></textarea>
+  </div>
+
+
+  <!-- ============================================================
+       PATIČKA FORMULÁŘE
+       Zde změň Form-Index (F-WxL-080 Ind. 00) pokud se změní verze
+       ============================================================ -->
+  <div class="form-footer">
+    <div class="fc">F-WxL-080 Ind. 00</div>
+    <div class="fc">Attention: Form-Index is valid only at the date of the printing</div>
+    <div class="fc" id="footerDate"></div>
+  </div>
+
+
+  <!-- ============================================================
+       TLAČÍTKA
+       ============================================================ -->
+  <div class="actions">
+    <button class="btn btn-primary"   onclick="exportPDF()">⬇ Export PDF</button>
+    <button class="btn btn-secondary" onclick="clearForm()">↺ Clear Form</button>
+  </div>
+
+</div><!-- konec .page -->
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+
+  /* ----------------------------------------------------------
+     SLOTS – časové sloty v tabulce
+     Chceš-li přidat/odebrat řádek, přidej/odeber zde
+     ---------------------------------------------------------- */
+  const slots = [
+    ["6:00 AM -",  "7:00 AM"],
+    ["7:00 AM -",  "8:00 AM"],
+    ["8:00 AM -",  "9:00 AM"],
+    ["9:00 AM -",  "10:00 AM"],
+    ["10:30 AM -", "11:30 AM"],
+    ["11:30 AM -", "12:30 PM"],
+    ["12:30 PM -", "1:30 PM"],
+    ["1:30 PM -",  "2:30 PM"],
+    ["2:30 PM -",  "3:30 PM"],
+    ["3:30 PM -",  "4:30 PM"],
+  ];
+
+
+  /* ----------------------------------------------------------
+     DATUM – nastaví dnešní datum a aktualizuje patičku
+     ---------------------------------------------------------- */
+  const today = new Date();
+  document.getElementById('checkDate').valueAsDate = today;
+
+  function toDisplayDate(d) {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  }
+
+  document.getElementById('footerDate').textContent = toDisplayDate(today);
+
+  document.getElementById('checkDate').addEventListener('change', function () {
+    if (this.value) {
+      document.getElementById('footerDate').textContent =
+        toDisplayDate(new Date(this.value + 'T00:00:00'));
+    }
+  });
+
+
+  /* ----------------------------------------------------------
+     STAVBA ŘÁDKŮ TABULKY
+     ---------------------------------------------------------- */
+  const tbody = document.getElementById('checkRows');
+  slots.forEach(([t1, t2], i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="col-hours">
+        <div class="time-inner">
+          <span class="t1">${t1}</span>
+          <span class="t2">${t2}</span>
+        </div>
+      </td>
+      <td class="col-initials">
+        <input type="text" maxlength="5" id="init_${i}">
+      </td>
+      <td class="col-comments">
+        <textarea rows="2" id="comment_${i}"></textarea>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  /* ----------------------------------------------------------
+     AUTOSAVE — localStorage
+     Uloží formulář při každé změně, načte při otevření stránky
+     ---------------------------------------------------------- */
+  const SAVE_KEY = 'hourly_check_v1';
+
+  function saveToStorage() {
+    const data = {
+      date:  document.getElementById('checkDate').value,
+      p1:    document.getElementById('p1').value,
+      p2:    document.getElementById('p2').value,
+      p3:    document.getElementById('p3').value,
+      p4:    document.getElementById('p4').value,
+      notes: document.getElementById('notesField').value,
+      rows:  slots.map((_, i) => ({
+        init:    document.getElementById(`init_${i}`).value,
+        comment: document.getElementById(`comment_${i}`).value,
+      })),
+    };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data.date)  { document.getElementById('checkDate').value = data.date;
+                        document.getElementById('footerDate').textContent =
+                          toDisplayDate(new Date(data.date + 'T00:00:00')); }
+      if (data.p1)    document.getElementById('p1').value = data.p1;
+      if (data.p2)    document.getElementById('p2').value = data.p2;
+      if (data.p3)    document.getElementById('p3').value = data.p3;
+      if (data.p4)    document.getElementById('p4').value = data.p4;
+      if (data.notes) document.getElementById('notesField').value = data.notes;
+      if (data.rows)  data.rows.forEach((r, i) => {
+        const init    = document.getElementById(`init_${i}`);
+        const comment = document.getElementById(`comment_${i}`);
+        if (init    && r.init)    init.value    = r.init;
+        if (comment && r.comment) comment.value = r.comment;
+        if (comment) { comment.style.height = 'auto'; comment.style.height = comment.scrollHeight + 'px'; }
+      });
+    } catch(e) { console.warn('Load failed:', e); }
+  }
+
+  // Automatické roztahování textareas + autosave při každé změně
+  document.addEventListener('input', e => {
+    if (e.target.tagName === 'TEXTAREA') {
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    }
+    saveToStorage();
+  });
+  document.addEventListener('change', () => saveToStorage());
+
+  // Načti uložená data po sestavení řádků
+  loadFromStorage();
+
+  /* ----------------------------------------------------------
+     CLEAR FORM – vymaže formulář i localStorage
+     ---------------------------------------------------------- */
+  function clearForm() {
+    if (!confirm('Clear all entries?')) return;
+    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+    slots.forEach((_, i) => {
+      document.getElementById(`init_${i}`).value    = '';
+      document.getElementById(`comment_${i}`).value = '';
+    });
+    document.getElementById('notesField').value = '';
+  }
+
+
+  /* ----------------------------------------------------------
+     NAČTENÍ LOGA DO BASE64
+     (nutné pro vložení obrázku do PDF)
+     ---------------------------------------------------------- */
+  let logoBase64 = null;
+
+  async function loadLogoAsBase64() {
+    try {
+      const imgEl  = document.getElementById('logoImg');
+      const url    = imgEl.src;
+      const resp   = await fetch(url);
+      const blob   = await resp.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // data:image/...;base64,...
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.warn('Logo se nepodařilo načíst do PDF:', e);
+      return null;
+    }
+  }
+
+
+  /* ----------------------------------------------------------
+     PDF EXPORT
+     ---------------------------------------------------------- */
+  async function exportPDF() {
+
+    // Nejprve načteme logo (pokud ještě není načteno)
+    if (!logoBase64) {
+      logoBase64 = await loadLogoAsBase64();
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    /* Rozměry stránky */
+    const pageW = 210;
+    const M     = 12;          // okraj
+    const W     = pageW - M*2; // použitelná šířka
+    const colH  = 35;          // sloupec Hours
+    const colI  = 26;          // sloupec Initials
+    const colC  = W - colH - colI; // sloupec Comments
+
+    /* Barvy */
+    const BLACK  = [17,  17,  17 ];
+    const RED    = [200, 16,  46 ];
+    const WHITE  = [255, 255, 255];
+    const LGREY  = [240, 240, 240];
+    const MGREY  = [140, 140, 140];
+    const STRIPE = [250, 250, 250];
+    const BGRED  = [255, 245, 246];
+
+    const dateVal     = document.getElementById('checkDate').value;
+    const displayDate = dateVal
+      ? toDisplayDate(new Date(dateVal + 'T00:00:00'))
+      : toDisplayDate(today);
+
+    let y = M;
+
+    /* ── HLAVIČKA ── */
+    const hH = 16;
+
+    // Buňka s datumem
+    doc.setFillColor(...LGREY);  doc.rect(M, y, colH, hH, 'F');
+    doc.setDrawColor(...BLACK);  doc.rect(M, y, colH, hH);
+    doc.setTextColor(...MGREY);  doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+    doc.text('DATE', M+2, y+4.5);
+    doc.setTextColor(...BLACK);  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.text(displayDate, M+2, y+12);
+
+    // Buňka s nadpisem
+    const titleW = W - colH - 34;
+    doc.setFillColor(...WHITE);  doc.rect(M+colH, y, titleW, hH, 'F');
+    doc.setDrawColor(...BLACK);  doc.rect(M+colH, y, titleW, hH);
+    doc.setTextColor(...BLACK);  doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('Hourly-check', M+colH+titleW/2, y+10.5, { align:'center' });
+
+    // Buňka s logem
+    const logoX = M + colH + titleW;
+    const logoW = 34;
+    doc.setFillColor(...WHITE);  doc.rect(logoX, y, logoW, hH, 'F');
+    doc.setDrawColor(...BLACK);  doc.rect(logoX, y, logoW, hH);
+
+    if (logoBase64) {
+      // Vloží skutečný obrázek loga
+      doc.addImage(logoBase64, 'JPEG', logoX+1, y+1, logoW-2, hH-2, '', 'FAST');
+    } else {
+      // Záložní text pokud se logo nenačetlo
+      doc.setTextColor(...RED); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text('ENGESER', logoX+logoW/2, y+8, { align:'center' });
+      doc.setFillColor(...RED); doc.rect(logoX+2, y+9, logoW-4, 1, 'F');
+      doc.setTextColor(...BLACK); doc.setFont('helvetica','normal'); doc.setFontSize(6);
+      doc.text('USA', logoX+logoW-3, y+13.5, { align:'right' });
+    }
+
+    y += hH;
+
+    /* ── INSTRUKCE ── */
+    const instrH = 14;
+    doc.setFillColor(...WHITE); doc.rect(M, y, W, instrH, 'F');
+    doc.setDrawColor(...BLACK); doc.rect(M, y, W, instrH);
+    doc.setTextColor(60,60,60); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    const instrLines = doc.splitTextToSize(
+      'Every work-station that is working on Production line is to be checked. If there is any questions please ask the supervisor right away.',
+      W-8
+    );
+    doc.text(instrLines, pageW/2, y + instrH/2 - (instrLines.length*4.5)/2 + 4, { align:'center' });
+    y += instrH;
+
+    /* ── SEZNAM OSOB ── */
+    const p1 = document.getElementById('p1').value || 'Suzette';
+    const p2 = document.getElementById('p2').value || 'Vladimir';
+    const p3 = document.getElementById('p3').value || 'John W.';
+    const p4 = document.getElementById('p4').value || '________';
+    const persH = 17;
+    doc.setFillColor(...WHITE); doc.rect(M, y, W, persH, 'F');
+    doc.setDrawColor(...BLACK); doc.rect(M, y, W, persH);
+    doc.setTextColor(60,60,60); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    doc.text('The following people have to do hourly checks. If the person listed as no.1 is not present, it falls to the', pageW/2, y+5,   { align:'center' });
+    doc.text('next person on the list to perform the checks and so on.',                                                    pageW/2, y+9.5, { align:'center' });
+    doc.setFont('helvetica','bold');
+    doc.text(`No.1 : ${p1}        No.2 : ${p2}        No.3 : ${p3}        No.4 : ${p4}`, pageW/2, y+14, { align:'center' });
+    y += persH;
+
+    /* ── UPOZORNĚNÍ ── */
+    const noticeH = 8;
+    doc.setFillColor(...BGRED); doc.rect(M, y, W, noticeH, 'F');
+    doc.setDrawColor(...RED);   doc.rect(M, y, W, noticeH);
+    doc.setTextColor(...RED);   doc.setFont('helvetica','bolditalic'); doc.setFontSize(7.5);
+    doc.text(
+      'By the end of each day, this form has to be signed and saved as PDF and upload to the ENGESER CLOUD.',
+      pageW/2, y+5.5, { align:'center' }
+    );
+    doc.setDrawColor(...BLACK);
+    y += noticeH;
+
+    /* ── ZÁHLAVÍ TABULKY ── */
+    const thH = 11;
+    doc.setFillColor(...WHITE); doc.rect(M, y, W, thH, 'F');
+    doc.setDrawColor(...BLACK); doc.rect(M, y, W, thH);
+    doc.line(M+colH,       y, M+colH,       y+thH);
+    doc.line(M+colH+colI,  y, M+colH+colI,  y+thH);
+    doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text('Hours',                                    M+colH/2,           y+4.5, { align:'center' });
+    doc.text('Check done by',                            M+colH+colI/2,      y+4.5, { align:'center' });
+    doc.text('(Initials)',                               M+colH+colI/2,      y+8.5, { align:'center' });
+    doc.text('Comments (Issues found/special remarks)',  M+colH+colI+colC/2, y+6.5, { align:'center' });
+    y += thH;
+
+    /* ── ŘÁDKY TABULKY ── */
+    slots.forEach(([t1, t2], i) => {
+      const initVal    = document.getElementById(`init_${i}`).value    || '';
+      const commentVal = document.getElementById(`comment_${i}`).value || '';
+
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      const cLines = commentVal.trim()
+        ? doc.splitTextToSize(commentVal, colC-5)
+        : [];
+      const rowH = Math.max(13, cLines.length * 4.5 + 6);
+
+      // Pozadí řádku (střídavé pruhy)
+      doc.setFillColor(...(i%2===0 ? WHITE : STRIPE));
+      doc.rect(M, y, W, rowH, 'F');
+      // Ohraničení
+      doc.setDrawColor(185,185,185);
+      doc.rect(M, y, W, rowH);
+      doc.line(M+colH,      y, M+colH,      y+rowH);
+      doc.line(M+colH+colI, y, M+colH+colI, y+rowH);
+
+      // Čas
+      doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(t1, M+colH/2, y+rowH/2-1, { align:'center' });
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      doc.text(t2, M+colH/2, y+rowH/2+4, { align:'center' });
+
+      // Initials
+      doc.setFont('helvetica','bold'); doc.setFontSize(11);
+      doc.text(initVal.toUpperCase(), M+colH+colI/2, y+rowH/2+2, { align:'center' });
+
+      // Komentář
+      if (cLines.length) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(8);
+        doc.setTextColor(...BLACK);
+        doc.text(cLines, M+colH+colI+3, y+5);
+      }
+
+      y += rowH;
+    });
+
+    /* ── POZNÁMKY ── */
+    const notesVal = document.getElementById('notesField').value || '';
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    const nLines = notesVal.trim()
+      ? doc.splitTextToSize(notesVal, W-25)
+      : [];
+    const notesH = Math.max(12, nLines.length*4.5+8);
+    doc.setFillColor(...WHITE); doc.rect(M, y, W, notesH, 'F');
+    doc.setDrawColor(...BLACK); doc.rect(M, y, W, notesH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...BLACK);
+    doc.text('Notes:', M+3, y+6.5);
+    if (nLines.length) {
+      doc.setFont('helvetica','normal');
+      doc.text(nLines, M+22, y+6.5);
+    }
+    y += notesH;
+
+    /* ── PATIČKA FORMULÁŘE ── */
+    const fH = 10;
+    const f1=38, f3=26, f2=W-f1-f3;
+    doc.setFillColor(...WHITE); doc.rect(M, y, W, fH, 'F');
+    doc.setDrawColor(...BLACK); doc.rect(M, y, W, fH);
+    doc.line(M+f1,    y, M+f1,    y+fH);
+    doc.line(M+f1+f2, y, M+f1+f2, y+fH);
+    doc.setTextColor(...BLACK); doc.setFont('courier','normal'); doc.setFontSize(7);
+    doc.text('F-WxL-080 Ind. 00', M+3, y+6.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text('Attention: Form-Index is valid only at the date of the printing', M+f1+f2/2, y+6.5, { align:'center' });
+    doc.setFont('courier','bold'); doc.setFontSize(7.5);
+    doc.text(displayDate, M+f1+f2+f3/2, y+6.5, { align:'center' });
+
+    /* ── ULOŽENÍ SOUBORU ── */
+    doc.save(`Check_${displayDate.replace(/\./g,'-')}.pdf`);
+  }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Production Checklist</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --red:#C8102E;--black:#111;--grey-dark:#333;--grey-mid:#666;
+    --grey-light:#ddd;--grey-bg:#e0e0e0;--white:#fff;
+    --border:1.5px solid #222;--border-light:1px solid #bbb;--col-label:#f0f2f5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;background:var(--grey-bg);min-height:100vh;padding:16px 12px 60px;color:var(--black);}
+  .page{max-width:980px;margin:0 auto;background:var(--white);border:2px solid var(--black);box-shadow:4px 4px 0 #aaa;}
+
+  /* HEADER */
+  .header{display:grid;grid-template-columns:90px 1fr 130px;border-bottom:var(--border);min-height:52px;}
+  .header-date{padding:7px 10px;border-right:var(--border);display:flex;flex-direction:column;gap:3px;justify-content:center;}
+  .header-date label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--grey-mid);}
+  .header-date input[type="date"]{font-family:Arial,sans-serif;font-size:11px;border:none;outline:none;width:100%;color:var(--black);background:transparent;}
+  .header-title{display:flex;align-items:center;justify-content:center;padding:8px 16px;}
+  .header-title h1{font-size:20px;font-weight:700;text-align:center;}
+  .header-logo{border-left:var(--border);display:flex;align-items:center;justify-content:center;padding:6px 10px;}
+  .header-logo img{max-height:42px;max-width:118px;object-fit:contain;}
+
+  /* INFO BLOCKS */
+  .info-block{padding:8px 14px;border-bottom:var(--border-light);font-size:11.5px;line-height:1.5;color:var(--grey-dark);text-align:center;}
+  .info-block.notice{color:var(--red);font-weight:600;font-size:11px;border-bottom:var(--border);}
+  .personnel-row{display:flex;flex-wrap:wrap;gap:3px 16px;margin-top:5px;justify-content:center;}
+  .person-slot{display:flex;align-items:center;gap:4px;font-size:11.5px;}
+  .person-slot .num{font-weight:700;}
+  .person-slot input{font-size:11.5px;border:none;border-bottom:1.5px solid var(--grey-light);outline:none;padding:1px 3px;width:84px;background:transparent;color:var(--black);}
+
+  /* TABLE HEADER */
+  .table-header{display:grid;grid-template-columns:1fr 1fr;border-bottom:var(--border);border-top:var(--border);}
+  .table-header .col-title{padding:7px;font-size:14px;font-weight:700;text-align:center;}
+  .table-header .col-title:first-child{border-right:var(--border);}
+
+  /* PAIR ROWS */
+  #rowsContainer{border-bottom:var(--border-light);}
+  .pair-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:var(--border);}
+  .half{padding:5px 7px 6px;display:flex;flex-direction:column;gap:4px;}
+  .half:first-child{border-right:var(--border);}
+  .half-labels{display:grid;grid-template-columns:60px 1fr 1fr;gap:4px;}
+  .label-cell{background:var(--col-label);border:var(--border-light);border-radius:2px;padding:3px 5px;display:flex;flex-direction:column;gap:2px;}
+  .label-cell span{font-size:9px;font-weight:700;color:var(--grey-mid);text-transform:uppercase;letter-spacing:.05em;}
+  .label-cell input{font-size:12px;font-weight:700;border:none;outline:none;background:transparent;color:var(--black);width:100%;padding:0;}
+  /* Rozbalovací menu Worker */
+  .label-cell select{font-family:Arial,sans-serif;font-size:11px;font-weight:700;border:none;outline:none;background:transparent;color:var(--black);width:100%;padding:0;cursor:pointer;-webkit-appearance:none;appearance:none;}
+  .half textarea{width:100%;min-height:72px;font-family:Arial,sans-serif;font-size:12px;border:var(--border-light);border-radius:2px;outline:none;resize:none;background:transparent;color:var(--black);line-height:1.5;padding:4px 6px;}
+  .remove-btn{align-self:flex-start;background:none;border:none;color:#bbb;font-size:18px;cursor:pointer;padding:0 2px;line-height:1;transition:color .15s;}
+  .remove-btn:hover{color:var(--red);}
+
+  /* ADD BUTTON */
+  .add-row-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;background:#f8f8f8;border:none;border-bottom:var(--border);font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:var(--grey-mid);cursor:pointer;letter-spacing:.04em;transition:background .15s,color .15s;}
+  .add-row-btn:hover{background:#eee;color:var(--black);}
+  .add-row-btn .plus{font-size:18px;color:var(--red);}
+
+  /* BOTTOM */
+  .bottom-row{display:grid;grid-template-columns:1fr 140px;border-bottom:var(--border);}
+  .notes-block{padding:6px 12px;border-right:var(--border-light);}
+  .notes-block label{font-weight:700;font-size:12px;}
+  .notes-block textarea{display:block;width:100%;min-height:40px;font-family:Arial,sans-serif;font-size:12px;border:none;outline:none;resize:none;background:transparent;color:var(--black);line-height:1.6;padding:2px 0;}
+  .initials-block{padding:6px 12px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
+  .initials-block label{font-weight:700;font-size:12px;}
+  .initials-block input{font-size:14px;font-weight:700;border:none;border-bottom:1.5px solid var(--grey-light);outline:none;background:transparent;color:var(--black);width:100%;text-transform:uppercase;}
+
+  /* FOOTER */
+  .form-footer{border-bottom:var(--border);display:grid;grid-template-columns:130px 1fr 110px;}
+  .form-footer .fc{padding:5px 8px;font-size:10px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.4;}
+  .form-footer .fc:nth-child(1){border-right:var(--border-light);justify-content:flex-start;font-weight:700;}
+  .form-footer .fc:nth-child(3){border-left:var(--border-light);font-weight:700;}
+
+  /* BUTTONS */
+  .actions{padding:13px 16px;display:flex;gap:10px;background:var(--grey-bg);flex-wrap:wrap;}
+  .btn{font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:9px 18px;border:var(--border);cursor:pointer;transition:all .15s;outline:none;}
+  .btn-primary{background:var(--red);color:white;box-shadow:3px 3px 0 var(--black);}
+  .btn-primary:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--black);}
+  .btn-primary:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--black);}
+  .btn-secondary{background:white;color:var(--black);box-shadow:3px 3px 0 var(--black);}
+  .btn-secondary:hover{background:#eee;transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--black);}
+  .btn-secondary:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--black);}
+
+  /* SETTINGS OVERLAY */
+  .settings-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0006;z-index:200;align-items:center;justify-content:center;}
+  .settings-overlay.show{display:flex;}
+  .settings-box{background:#fff;border:2px solid var(--black);box-shadow:6px 6px 0 var(--black);padding:24px;max-width:420px;width:92%;max-height:80vh;overflow-y:auto;}
+  .settings-box h2{font-size:16px;font-weight:700;color:var(--red);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .settings-box .s-sub{font-size:11px;color:var(--grey-mid);margin-bottom:16px;}
+  .settings-box .s-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey-dark);margin-bottom:8px;margin-top:14px;display:block;}
+  .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px;}
+  .tag{background:#f0f2f5;border:1px solid #ccc;color:var(--black);padding:5px 10px;border-radius:2px;font-size:13px;display:flex;align-items:center;gap:6px;font-family:Arial,sans-serif;}
+  .tag-del{cursor:pointer;color:var(--red);font-size:17px;line-height:1;font-weight:400;border:none;background:none;padding:0;}
+  .tag-del:hover{opacity:.7;}
+  .s-add-row{display:flex;gap:8px;margin-bottom:4px;}
+  .s-add-row input{flex:1;font-family:Arial,sans-serif;font-size:13px;padding:8px 10px;border:var(--border);outline:none;background:#fff;color:var(--black);}
+  .s-add-row input:focus{border-color:var(--red);}
+  .s-add-row button{padding:8px 14px;background:var(--red);color:#fff;border:var(--border);font-family:Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em;white-space:nowrap;}
+  .s-add-row button:hover{background:#a00018;}
+  .s-close{margin-top:18px;width:100%;padding:11px;background:var(--black);color:#fff;border:none;font-family:Arial,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;}
+  .s-close:hover{background:#333;}
+  .s-empty{font-size:12px;color:#bbb;font-style:italic;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============================================================
+       HLAVIČKA  |  změň: nadpis h1, src loga
+       ============================================================ -->
+  <div class="header">
+    <div class="header-date">
+      <label>Date</label>
+      <input type="date" id="checkDate">
+    </div>
+    <div class="header-title">
+      <h1>Production Checklist for Tablet</h1>
+    </div>
+    <div class="header-logo">
+      <img id="logoImg"
+           src="https://engeser-usa.com/wp-content/uploads/2022/03/Logo_ENGESER_USA-1-300x88.jpg"
+           alt="Company Logo">
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SEZNAM OSOB  |  změň jména (value="...")
+       ============================================================ -->
+  <div class="info-block">
+    The following people have to do production checks at least 2 times a day.<br>
+    If the person listed as no.1 is not present, it falls to the next person on the list and so on.
+    <div class="personnel-row">
+      <div class="person-slot"><span class="num">No.1 :</span><input type="text" id="p1" value="Vladimir"></div>
+      <div class="person-slot"><span class="num">No.2 :</span><input type="text" id="p2" value="Suzette"></div>
+      <div class="person-slot"><span class="num">No.3 :</span><input type="text" id="p3" value="Latoya"></div>
+      <div class="person-slot"><span class="num">No.4 :</span><input type="text" id="p4" value="John W."></div>
+      <div class="person-slot"><span class="num">No.5 :</span><input type="text" id="p5" placeholder="________"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       UPOZORNĚNÍ  |  změň text pokud potřeba
+       ============================================================ -->
+  <div class="info-block notice">
+    By the end of each day, the form has to be filled out, signed and exported as PDF.
+  </div>
+
+  <!-- ============================================================
+       ZÁHLAVÍ TABULKY
+       ============================================================ -->
+  <div class="table-header">
+    <div class="col-title">Morning</div>
+    <div class="col-title">Afternoon</div>
+  </div>
+
+  <!-- ============================================================
+       ŘÁDKY FORMULÁŘE
+       10 párů se generuje automaticky, +ADD přidává další
+       ============================================================ -->
+  <div id="rowsContainer"></div>
+  <button class="add-row-btn" onclick="addRow()">
+    <span class="plus">＋</span> ADD WORKPLACE
+  </button>
+
+  <!-- ============================================================
+       POZNÁMKY + INITIALS
+       ============================================================ -->
+  <div class="bottom-row">
+    <div class="notes-block">
+      <label>Notes:</label>
+      <textarea id="notesField"></textarea>
+    </div>
+    <div class="initials-block">
+      <label>Initials:</label>
+      <input type="text" id="initialsField" maxlength="6">
+    </div>
+  </div>
+
+  <!-- ============================================================
+       PATIČKA  |  změň Form-Index pokud se změní verze
+       ============================================================ -->
+  <div class="form-footer">
+    <div class="fc">F-WxL-081 Ind. 00</div>
+    <div class="fc">Attention: Form-Index is valid only at the date of the export</div>
+    <div class="fc" id="footerDate"></div>
+  </div>
+
+  <!-- TLAČÍTKA -->
+  <div class="actions">
+    <button class="btn btn-primary"   onclick="exportPDF()">⬇ Export PDF</button>
+    <button class="btn btn-secondary" onclick="clearForm()">↺ Clear Form</button>
+    <button class="btn btn-secondary" onclick="openSettings()">⚙ Settings</button>
+  </div>
+
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-box">
+    <h2>⚙ Settings</h2>
+    <div class="s-sub">Add or remove workers. Changes apply immediately to all dropdowns.</div>
+
+    <span class="s-label">Workers</span>
+    <div class="tag-list" id="settingsWorkerTags"></div>
+    <div class="s-add-row">
+      <input type="text" id="newWorkerInput" placeholder="Worker name..." onkeydown="if(event.key==='Enter')addWorkerFromSettings()">
+      <button onclick="addWorkerFromSettings()">+ ADD</button>
+    </div>
+
+    <button class="s-close" onclick="closeSettings()">✓ Done – Close Settings</button>
+  </div>
+</div>
+
+<script>
+  /* ----------------------------------------------------------
+     SEZNAM ZAMĚSTNANCŮ — spravuje se přes Settings, ukládá se
+     do localStorage. Výchozí seznam se použije jen při prvním
+     spuštění.
+     ---------------------------------------------------------- */
+  const WORKERS_KEY = 'pc_workers_v1';
+  const WORKERS_DEFAULT = [
+    'Bryanna','Cash','Chantel','Cydrick','Delilah','Erlande',
+    'Holdan','Jomayra','Latoya','Lourdena','Luneda','Marcus',
+    'Maria','Nadia','Rose','Rosalinda','Ruel','Sageline',
+    'Samuel','Sarah','Shaquille','Shenayadher','Suzette','Vadius','Ydanese',
+  ];
+
+  function loadWorkers() {
+    try {
+      const stored = localStorage.getItem(WORKERS_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return [...WORKERS_DEFAULT];
+  }
+
+  function saveWorkers() {
+    try { localStorage.setItem(WORKERS_KEY, JSON.stringify(WORKERS)); } catch(e) {}
+  }
+
+  let WORKERS = loadWorkers();
+
+  /* ── Settings overlay ── */
+  function openSettings() {
+    refreshSettingsTags();
+    document.getElementById('settingsOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('newWorkerInput').focus(), 50);
+  }
+
+  function closeSettings() {
+    document.getElementById('settingsOverlay').classList.remove('show');
+    rebuildAllWorkerSelects();
+  }
+
+  function refreshSettingsTags() {
+    const list = document.getElementById('settingsWorkerTags');
+    if (WORKERS.length === 0) {
+      list.innerHTML = '<span class="s-empty">No workers yet.</span>';
+      return;
+    }
+    list.innerHTML = [...WORKERS].sort().map(w =>
+      `<div class="tag">${w}<button class="tag-del" onclick="removeWorkerFromSettings(this,'${w.replace(/'/g,"\'")}')" >×</button></div>`
+    ).join('');
+  }
+
+  function addWorkerFromSettings() {
+    const inp = document.getElementById('newWorkerInput');
+    const name = inp.value.trim();
+    if (!name) return;
+    if (WORKERS.includes(name)) { inp.select(); return; }
+    WORKERS.push(name);
+    WORKERS.sort();
+    saveWorkers();
+    inp.value = '';
+    refreshSettingsTags();
+  }
+
+  function removeWorkerFromSettings(btn, name) {
+    const idx = WORKERS.indexOf(name);
+    if (idx !== -1) WORKERS.splice(idx, 1);
+    saveWorkers();
+    refreshSettingsTags();
+  }
+
+  /* Přebuduje všechny existující selects po zavření Settings */
+  function rebuildAllWorkerSelects() {
+    document.querySelectorAll('.pair-row').forEach(row => {
+      const id = row.dataset.id;
+      ['m_worker_'+id, 'a_worker_'+id].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const current = sel.value;
+        sel.innerHTML = buildWorkerOptions();
+        if ([...sel.options].some(o => o.value === current)) sel.value = current;
+      });
+    });
+  }
+
+
+  function buildWorkerOptions() {
+    return ['', ...WORKERS].map(name =>
+      `<option value="${name}">${name === '' ? '— select —' : name}</option>`
+    ).join('');
+  }
+
+  function buildWorkerSelect(id) {
+    return `<select id="${id}">${buildWorkerOptions()}</select>`;
+  }
+
+  /* ----------------------------------------------------------
+     POČET VÝCHOZÍCH ŘÁDKŮ  |  změň číslo dle potřeby
+     ---------------------------------------------------------- */
+  const INITIAL_ROWS = 10;
+  let rowCounter = 0;
+
+  /* ----------------------------------------------------------
+     DATUM
+     ---------------------------------------------------------- */
+  const today = new Date();
+  document.getElementById('checkDate').valueAsDate = today;
+
+  function toDisplayDate(d) {
+    return String(d.getDate()).padStart(2,'0') + '.' +
+           String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+  document.getElementById('footerDate').textContent = toDisplayDate(today);
+  document.getElementById('checkDate').addEventListener('change', function() {
+    if (this.value)
+      document.getElementById('footerDate').textContent =
+        toDisplayDate(new Date(this.value+'T00:00:00'));
+  });
+
+  /* ----------------------------------------------------------
+     PŘIDÁNÍ PÁRU ŘÁDKŮ (Morning + Afternoon)
+     ---------------------------------------------------------- */
+  function addRow() {
+    const id = rowCounter++;
+    const container = document.getElementById('rowsContainer');
+    const row = document.createElement('div');
+    row.className = 'pair-row';
+    row.dataset.id = id;
+    row.innerHTML = `
+      <div class="half">
+        <div class="half-labels">
+          <div class="label-cell"><span>WP</span><input type="text" id="m_wp_${id}"></div>
+          <div class="label-cell"><span>Harness nr.</span><input type="text" id="m_harness_${id}"></div>
+          <div class="label-cell"><span>Worker</span>${buildWorkerSelect('m_worker_'+id)}</div>
+        </div>
+        <textarea id="m_notes_${id}"></textarea>
+      </div>
+      <div class="half">
+        <div style="display:flex;gap:4px;align-items:flex-start;">
+          <div class="half-labels" style="flex:1;">
+            <div class="label-cell"><span>WP</span><input type="text" id="a_wp_${id}"></div>
+            <div class="label-cell"><span>Harness nr.</span><input type="text" id="a_harness_${id}"></div>
+            <div class="label-cell"><span>Worker</span>${buildWorkerSelect('a_worker_'+id)}</div>
+          </div>
+          <button class="remove-btn" onclick="removeRow(${id})" title="Remove row">×</button>
+        </div>
+        <textarea id="a_notes_${id}"></textarea>
+      </div>`;
+    container.appendChild(row);
+  }
+
+  /* ----------------------------------------------------------
+     ODEBRÁNÍ ŘÁDKU
+     ---------------------------------------------------------- */
+  function removeRow(id) {
+    const row = document.querySelector(`.pair-row[data-id="${id}"]`);
+    if (row && document.querySelectorAll('.pair-row').length > 1) row.remove();
+  }
+
+  /* ----------------------------------------------------------
+     AUTOSAVE — localStorage
+     Uloží celý formulář při každé změně, načte při otevření
+     ---------------------------------------------------------- */
+  const SAVE_KEY = 'production_checklist_v1';
+
+  function saveToStorage() {
+    const rows = [];
+    document.querySelectorAll('.pair-row').forEach(row => {
+      const id = row.dataset.id;
+      rows.push({
+        id,
+        m_wp:      (document.getElementById('m_wp_'+id)||{}).value||'',
+        m_harness: (document.getElementById('m_harness_'+id)||{}).value||'',
+        m_worker:  (document.getElementById('m_worker_'+id)||{}).value||'',
+        m_notes:   (document.getElementById('m_notes_'+id)||{}).value||'',
+        a_wp:      (document.getElementById('a_wp_'+id)||{}).value||'',
+        a_harness: (document.getElementById('a_harness_'+id)||{}).value||'',
+        a_worker:  (document.getElementById('a_worker_'+id)||{}).value||'',
+        a_notes:   (document.getElementById('a_notes_'+id)||{}).value||'',
+      });
+    });
+    const data = {
+      date:     document.getElementById('checkDate').value,
+      p1:       document.getElementById('p1').value,
+      p2:       document.getElementById('p2').value,
+      p3:       document.getElementById('p3').value,
+      p4:       document.getElementById('p4').value,
+      p5:       document.getElementById('p5').value,
+      notes:    document.getElementById('notesField').value,
+      initials: document.getElementById('initialsField').value,
+      rows,
+    };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+
+      if (data.date)     document.getElementById('checkDate').value = data.date;
+      if (data.p1)       document.getElementById('p1').value = data.p1;
+      if (data.p2)       document.getElementById('p2').value = data.p2;
+      if (data.p3)       document.getElementById('p3').value = data.p3;
+      if (data.p4)       document.getElementById('p4').value = data.p4;
+      if (data.p5)       document.getElementById('p5').value = data.p5;
+      if (data.notes)    document.getElementById('notesField').value = data.notes;
+      if (data.initials) document.getElementById('initialsField').value = data.initials;
+
+      // Obnov patičku s datem
+      if (data.date) {
+        document.getElementById('footerDate').textContent =
+          toDisplayDate(new Date(data.date+'T00:00:00'));
+      }
+
+      // Obnov řádky
+      if (data.rows && data.rows.length > 0) {
+        document.getElementById('rowsContainer').innerHTML = '';
+        rowCounter = 0;
+        data.rows.forEach(r => {
+          const id = rowCounter++;
+          const container = document.getElementById('rowsContainer');
+          const row = document.createElement('div');
+          row.className = 'pair-row';
+          row.dataset.id = id;
+          row.innerHTML = `
+            <div class="half">
+              <div class="half-labels">
+                <div class="label-cell"><span>WP</span><input type="text" id="m_wp_${id}"></div>
+                <div class="label-cell"><span>Harness nr.</span><input type="text" id="m_harness_${id}"></div>
+                <div class="label-cell"><span>Worker</span>${buildWorkerSelect('m_worker_'+id)}</div>
+              </div>
+              <textarea id="m_notes_${id}"></textarea>
+            </div>
+            <div class="half">
+              <div style="display:flex;gap:4px;align-items:flex-start;">
+                <div class="half-labels" style="flex:1;">
+                  <div class="label-cell"><span>WP</span><input type="text" id="a_wp_${id}"></div>
+                  <div class="label-cell"><span>Harness nr.</span><input type="text" id="a_harness_${id}"></div>
+                  <div class="label-cell"><span>Worker</span>${buildWorkerSelect('a_worker_'+id)}</div>
+                </div>
+                <button class="remove-btn" onclick="removeRow(${id})" title="Remove row">×</button>
+              </div>
+              <textarea id="a_notes_${id}"></textarea>
+            </div>`;
+          container.appendChild(row);
+
+          // Naplň hodnotami
+          const fill = (elId, val) => { const el=document.getElementById(elId); if(el&&val) el.value=val; };
+          fill('m_wp_'+id,      r.m_wp);
+          fill('m_harness_'+id, r.m_harness);
+          fill('m_worker_'+id,  r.m_worker);
+          fill('m_notes_'+id,   r.m_notes);
+          fill('a_wp_'+id,      r.a_wp);
+          fill('a_harness_'+id, r.a_harness);
+          fill('a_worker_'+id,  r.a_worker);
+          fill('a_notes_'+id,   r.a_notes);
+
+          // Oprav výšku textareas
+          ['m_notes_'+id,'a_notes_'+id].forEach(elId => {
+            const el = document.getElementById(elId);
+            if (el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+          });
+        });
+        return true;
+      }
+    } catch(e) { console.warn('Load failed:', e); }
+    return false;
+  }
+
+  /* Inicializace — načti uložená data nebo vytvoř výchozí řádky */
+  const loaded = loadFromStorage();
+  if (!loaded) {
+    for (let i = 0; i < INITIAL_ROWS; i++) addRow();
+  }
+
+  /* Auto-resize textareas + autosave při každé změně */
+  document.addEventListener('input', e => {
+    if (e.target.tagName === 'TEXTAREA') {
+      e.target.style.height = 'auto';
+      e.target.style.height = e.target.scrollHeight + 'px';
+    }
+    saveToStorage();
+  });
+  document.addEventListener('change', () => saveToStorage());
+
+  /* ----------------------------------------------------------
+     CLEAR FORM — vymaže i localStorage
+     ---------------------------------------------------------- */
+  function clearForm() {
+    if (!confirm('Clear all entries? This cannot be undone.')) return;
+    try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+    document.getElementById('rowsContainer').innerHTML = '';
+    rowCounter = 0;
+    for (let i = 0; i < INITIAL_ROWS; i++) addRow();
+    document.getElementById('notesField').value = '';
+    document.getElementById('initialsField').value = '';
+  }
+
+  /* ----------------------------------------------------------
+     LOGO → BASE64 (pro PDF)
+     ---------------------------------------------------------- */
+  let logoBase64 = null;
+  async function loadLogoAsBase64() {
+    try {
+      const resp = await fetch(document.getElementById('logoImg').src);
+      const blob = await resp.blob();
+      return new Promise(resolve => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(r.result);
+        r.readAsDataURL(blob);
+      });
+    } catch(e) { console.warn('Logo failed:', e); return null; }
+  }
+
+  /* ----------------------------------------------------------
+     PDF EXPORT  —  landscape A4
+     ---------------------------------------------------------- */
+  async function exportPDF() {
+    if (!logoBase64) logoBase64 = await loadLogoAsBase64();
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+    const pageW=297, pageH=210, M=10, W=pageW-M*2;
+    const BLACK=[17,17,17], RED=[200,16,46], WHITE=[255,255,255];
+    const LGREY=[240,240,240], MGREY=[140,140,140], LBLUE=[245,247,250], BGRED=[255,245,246];
+
+    const dateVal = document.getElementById('checkDate').value;
+    const displayDate = dateVal ? toDisplayDate(new Date(dateVal+'T00:00:00')) : toDisplayDate(today);
+
+    let y = M;
+
+    /* ── Kontrola konce stránky ── */
+    function checkBreak(need) {
+      if (y + need > pageH - 16) { doc.addPage(); y = M; drawHeader(); }
+    }
+
+    /* ── Hlavička stránky ── */
+    function drawHeader() {
+      const hH=13, dateW=30, logoW=36, titleW=W-dateW-logoW;
+      doc.setFillColor(...LGREY); doc.rect(M,y,dateW,hH,'F');
+      doc.setDrawColor(...BLACK); doc.rect(M,y,dateW,hH);
+      doc.setTextColor(...MGREY); doc.setFont('helvetica','bold'); doc.setFontSize(6);
+      doc.text('DATE',M+2,y+4);
+      doc.setTextColor(...BLACK); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+      doc.text(displayDate,M+2,y+10);
+
+      doc.setFillColor(...WHITE); doc.rect(M+dateW,y,titleW,hH,'F');
+      doc.setDrawColor(...BLACK); doc.rect(M+dateW,y,titleW,hH);
+      doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+      doc.text('Production Checklist for Tablet',M+dateW+titleW/2,y+9,{align:'center'});
+
+      const lx=M+dateW+titleW;
+      doc.setFillColor(...WHITE); doc.rect(lx,y,logoW,hH,'F');
+      doc.setDrawColor(...BLACK); doc.rect(lx,y,logoW,hH);
+      if (logoBase64) {
+        doc.addImage(logoBase64,'JPEG',lx+1,y+1,logoW-2,hH-2,'','FAST');
+      } else {
+        doc.setTextColor(...RED); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+        doc.text('ENGESER',lx+logoW/2,y+7,{align:'center'});
+        doc.setFillColor(...RED); doc.rect(lx+2,y+8,logoW-4,1,'F');
+        doc.setTextColor(...BLACK); doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
+        doc.text('USA',lx+logoW-2,y+11,{align:'right'});
+      }
+      y += hH;
+    }
+
+    /* ── Osoby ── */
+    function drawPersonnel() {
+      const p=[1,2,3,4,5].map(n=>document.getElementById('p'+n).value||'________');
+      const bH=12;
+      doc.setFillColor(...WHITE); doc.rect(M,y,W,bH,'F');
+      doc.setDrawColor(...BLACK); doc.rect(M,y,W,bH);
+      doc.setTextColor(60,60,60); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      doc.text('The following people have to do production checks at least 2 times a day. If the person listed as no.1 is not present, it falls to the next person on the list and so on.',pageW/2,y+4.5,{align:'center',maxWidth:W-6});
+      doc.setFont('helvetica','bold');
+      doc.text(`No.1: ${p[0]}    No.2: ${p[1]}    No.3: ${p[2]}    No.4: ${p[3]}    No.5: ${p[4]}`,pageW/2,y+9.5,{align:'center'});
+      y += bH;
+    }
+
+    /* ── Notice ── */
+    function drawNotice() {
+      const nH=7;
+      doc.setFillColor(...BGRED); doc.rect(M,y,W,nH,'F');
+      doc.setDrawColor(...RED);   doc.rect(M,y,W,nH);
+      doc.setTextColor(...RED);   doc.setFont('helvetica','bolditalic'); doc.setFontSize(7);
+      doc.text('By the end of each day, the form has to be filled out, signed and exported as PDF.',pageW/2,y+4.5,{align:'center'});
+      doc.setDrawColor(...BLACK);
+      y += nH;
+    }
+
+    /* ── Záhlaví tabulky ── */
+    function drawTableHeader() {
+      const thH=8, half=W/2;
+      doc.setFillColor(...WHITE); doc.rect(M,y,W,thH,'F');
+      doc.setDrawColor(...BLACK); doc.rect(M,y,W,thH);
+      doc.line(M+half,y,M+half,y+thH);
+      doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text('Morning',  M+half/2,     y+5.5,{align:'center'});
+      doc.text('Afternoon',M+half+half/2,y+5.5,{align:'center'});
+      y += thH;
+    }
+
+    /* ── Jeden pár řádků ── */
+    function drawPair(id) {
+      const g = key => (document.getElementById(key)||{}).value||'';
+      const mWP=g(`m_wp_${id}`), mH=g(`m_harness_${id}`), mW=g(`m_worker_${id}`), mN=g(`m_notes_${id}`);
+      const aWP=g(`a_wp_${id}`), aH=g(`a_harness_${id}`), aW=g(`a_worker_${id}`), aN=g(`a_notes_${id}`);
+
+      const half=W/2, lW1=18, lW2=(half-lW1)/2;
+      doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+      const mLines=doc.splitTextToSize(mN||' ',half-6);
+      const aLines=doc.splitTextToSize(aN||' ',half-6);
+      const notesH=Math.max(10, Math.max(mLines.length,aLines.length)*4+4);
+      const rowH=6+notesH+2;
+
+      checkBreak(rowH);
+      const y0=y;
+
+      doc.setFillColor(...WHITE); doc.rect(M,y0,W,rowH,'F');
+      doc.setDrawColor(180,180,180); doc.rect(M,y0,W,rowH);
+      doc.setDrawColor(...BLACK); doc.line(M+half,y0,M+half,y0+rowH);
+
+      /* Pomocná funkce pro label buňku */
+      function labelCell(x, label, value, bold) {
+        doc.setFillColor(...LBLUE); doc.rect(x,y0,lW1>18?lW1:lW2,6,'F');
+        // WP je užší
+      }
+
+      /* Morning + Afternoon labels */
+      [M, M+half].forEach((ox, side) => {
+        const wp    = side===0 ? mWP : aWP;
+        const harness = side===0 ? mH : aH;
+        const worker  = side===0 ? mW : aW;
+        const notes   = side===0 ? mLines : aLines;
+
+        // WP
+        doc.setFillColor(...LBLUE); doc.rect(ox,y0,lW1,6,'F');
+        doc.setDrawColor(180,180,180); doc.rect(ox,y0,lW1,6);
+        doc.setTextColor(...MGREY); doc.setFont('helvetica','bold'); doc.setFontSize(5);
+        doc.text('WP',ox+1,y0+3);
+        doc.setTextColor(...BLACK); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+        doc.text(wp,ox+lW1/2,y0+5.5,{align:'center'});
+
+        // Harness
+        doc.setFillColor(...LBLUE); doc.rect(ox+lW1,y0,lW2,6,'F');
+        doc.setDrawColor(180,180,180); doc.rect(ox+lW1,y0,lW2,6);
+        doc.setTextColor(...MGREY); doc.setFont('helvetica','bold'); doc.setFontSize(5);
+        doc.text('Harness nr.',ox+lW1+1,y0+3);
+        doc.setTextColor(...BLACK); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+        doc.text(harness,ox+lW1+lW2/2,y0+5.5,{align:'center'});
+
+        // Worker
+        doc.setFillColor(...LBLUE); doc.rect(ox+lW1+lW2,y0,lW2,6,'F');
+        doc.setDrawColor(180,180,180); doc.rect(ox+lW1+lW2,y0,lW2,6);
+        doc.setTextColor(...MGREY); doc.setFont('helvetica','bold'); doc.setFontSize(5);
+        doc.text('Worker',ox+lW1+lW2+1,y0+3);
+        doc.setTextColor(...BLACK); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+        doc.text(worker,ox+lW1+lW2+lW2/2,y0+5.5,{align:'center'});
+
+        // Notes text
+        if (notes.join('').trim()) {
+          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...BLACK);
+          doc.text(notes, ox+2, y0+6+4);
+        }
+      });
+
+      y += rowH;
+    }
+
+    /* ════ SESTAVENÍ ════ */
+    drawHeader();
+    drawPersonnel();
+    drawNotice();
+    drawTableHeader();
+
+    document.querySelectorAll('.pair-row').forEach(row => drawPair(Number(row.dataset.id)));
+
+    /* Notes + Initials */
+    const notesVal    = document.getElementById('notesField').value||'';
+    const initialsVal = document.getElementById('initialsField').value||'';
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    const nLines = notesVal.trim() ? doc.splitTextToSize(notesVal,W-50) : [];
+    const botH   = Math.max(10,nLines.length*4+6);
+    checkBreak(botH+12);
+
+    doc.setFillColor(...WHITE); doc.rect(M,y,W,botH,'F');
+    doc.setDrawColor(...BLACK); doc.rect(M,y,W,botH);
+    doc.line(M+W-40,y,M+W-40,y+botH);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...BLACK);
+    doc.text('Notes:',M+2,y+5);
+    if (nLines.length) { doc.setFont('helvetica','normal'); doc.text(nLines,M+18,y+5); }
+    doc.setFont('helvetica','bold');
+    doc.text('Initials:',M+W-38,y+5);
+    doc.setFontSize(11);
+    doc.text(initialsVal.toUpperCase(),M+W-20,y+botH/2+2,{align:'center'});
+    y += botH;
+
+    /* Patička */
+    const fH=9,f1=40,f3=32,f2=W-f1-f3;
+    doc.setFillColor(...WHITE); doc.rect(M,y,W,fH,'F');
+    doc.setDrawColor(...BLACK); doc.rect(M,y,W,fH);
+    doc.line(M+f1,y,M+f1,y+fH);
+    doc.line(M+f1+f2,y,M+f1+f2,y+fH);
+    doc.setTextColor(...BLACK); doc.setFont('courier','normal'); doc.setFontSize(6.5);
+    doc.text('F-WxL-081 Ind. 00',M+2,y+5.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+    doc.text('Attention: Form-Index is valid only at the date of the export',M+f1+f2/2,y+5.5,{align:'center'});
+    doc.setFont('courier','bold'); doc.setFontSize(7);
+    doc.text(displayDate,M+f1+f2+f3/2,y+5.5,{align:'center'});
+
+    doc.save(`Production-Checklist_${displayDate.replace(/\./g,'-')}.pdf`);
+  }
+</script>
+</body>
+</html>
